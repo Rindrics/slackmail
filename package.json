@@ -9,6 +9,8 @@
     "lint": "biome lint src",
     "format": "biome format src --write",
     "check": "biome check src",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "prepare": "husky"
   },
   "keywords": [
@@ -24,7 +26,9 @@
     "@biomejs/biome": "2.3.10",
     "@types/node": "25.0.3",
     "husky": "9.1.7",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vite-tsconfig-paths": "5.1.4",
+    "vitest": "4.0.16"
   },
   "engines": {
     "node": "24.12.0"
