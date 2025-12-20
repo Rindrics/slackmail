@@ -1,1 +1,1 @@
-export type { StorageRepository } from "./storageRepository";
+export type { StorageRepository } from './storageRepository';

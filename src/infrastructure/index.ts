@@ -1,1 +1,1 @@
-export { S3StorageRepository } from "./s3StorageRepository";
+export { S3StorageRepository } from './s3StorageRepository';
