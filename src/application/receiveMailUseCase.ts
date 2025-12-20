@@ -1,6 +1,6 @@
 import type { Email } from '@/domain/entities';
-import type { StorageRepository } from '@/domain/repositories';
 import type { EmailParser } from '@/domain/entities/emailParser';
+import type { StorageRepository } from '@/domain/repositories';
 
 export interface ReceiveMailUseCaseInput {
   storageKey: string;

@@ -1,6 +1,6 @@
 export {
   ReceiveMailUseCase,
+  type ReceiveMailUseCaseDeps,
   type ReceiveMailUseCaseInput,
   type ReceiveMailUseCaseOutput,
-  type ReceiveMailUseCaseDeps,
 } from './receiveMailUseCase';
