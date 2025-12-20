@@ -3,6 +3,10 @@ node_modules/
 
 # Build output
 dist/
+*.d.ts
+*.d.ts.map
+*.js
+*.js.map
 
 # Environment
 .env
