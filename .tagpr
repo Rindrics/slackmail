@@ -1,0 +1,5 @@
+# config file for the tagpr in git config format
+[tagpr]
+    versionFile = package.json
+    releaseBranch = main
+    vPrefix = true
