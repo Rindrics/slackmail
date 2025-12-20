@@ -70,7 +70,7 @@ export class SimpleEmailParser implements EmailParser {
       cc: ccHeader ? parseEmailAddresses(ccHeader) : undefined,
       subject,
       body: { text: body },
-      date: dateHeader ? new Date(dateHeader) : new Date(),
+      date: this.parseDateHeader(dateHeader),
       inReplyTo: inReplyTo?.replace(/^<|>$/g, ''),
       references: referencesHeader
         ?.split(/\s+/)
@@ -111,5 +111,19 @@ export class SimpleEmailParser implements EmailParser {
 
   private generateMessageId(): string {
     return `${Date.now()}.${Math.random().toString(36).slice(2)}@local`;
+  }
+
+  /**
+   * Parse date header string, returning fallback if invalid.
+   */
+  private parseDateHeader(dateHeader: string | undefined): Date {
+    if (!dateHeader) {
+      return new Date();
+    }
+    const parsed = new Date(dateHeader);
+    if (Number.isNaN(parsed.getTime())) {
+      return new Date();
+    }
+    return parsed;
   }
 }
