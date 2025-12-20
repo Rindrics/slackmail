@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "build:lambda": "esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/index.js",
+    "build:lambda": "esbuild src/index.ts --bundle --platform=node --target=node24 --outfile=dist/index.js",
     "lint": "biome lint src",
     "format": "biome format src --write",
     "check": "biome check src",
