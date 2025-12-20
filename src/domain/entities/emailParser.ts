@@ -20,7 +20,19 @@ export function parseEmailAddress(input: string): EmailAddress {
 }
 
 /**
- * Parse multiple email addresses separated by comma
+ * Parse multiple email addresses separated by comma.
+ *
+ * LIMITATION: This implementation naively splits on commas, which breaks
+ * quoted display names containing commas (RFC 5322 allows this).
+ *
+ * Example of input that will be mis-parsed:
+ *   "Doe, John" <john@example.com>, jane@example.com
+ *   -> Incorrectly parsed as 3 addresses: ["Doe", "John" <john@example.com>, jane@example.com]
+ *
+ * For production use with complex email addresses, consider using a robust
+ * RFC 5322-compliant parser such as:
+ *   - mailparser (https://www.npmjs.com/package/mailparser)
+ *   - email-addresses (https://www.npmjs.com/package/email-addresses)
  */
 export function parseEmailAddresses(input: string): EmailAddress[] {
   return input
