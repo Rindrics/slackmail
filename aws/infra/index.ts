@@ -1,8 +1,8 @@
-import { projectName, stackName } from "./config";
-import { emailBucket } from "./s3";
-import { boltLambda, lambdaRole } from "./lambda";
-import { api, stage } from "./apigateway";
-import "./s3-notification"; // S3 event notification setup
+import { projectName, stackName } from './config';
+import { emailBucket } from './s3';
+import { boltLambda, lambdaRole } from './lambda';
+import { api, stage } from './apigateway';
+import './s3-notification'; // S3 event notification setup
 
 // =============================================================================
 // Exports

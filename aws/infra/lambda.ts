@@ -1,19 +1,19 @@
-import * as pulumi from "@pulumi/pulumi";
-import * as aws from "@pulumi/aws";
-import { stackName, tags } from "./config";
-import { emailBucket } from "./s3";
+import * as pulumi from '@pulumi/pulumi';
+import * as aws from '@pulumi/aws';
+import { stackName, tags } from './config';
+import { emailBucket } from './s3';
 
 // IAM role for Lambda execution
-export const lambdaRole = new aws.iam.Role("lambda-role", {
+export const lambdaRole = new aws.iam.Role('lambda-role', {
   assumeRolePolicy: JSON.stringify({
-    Version: "2012-10-17",
+    Version: '2012-10-17',
     Statement: [
       {
-        Action: "sts:AssumeRole",
+        Action: 'sts:AssumeRole',
         Principal: {
-          Service: "lambda.amazonaws.com",
+          Service: 'lambda.amazonaws.com',
         },
-        Effect: "Allow",
+        Effect: 'Allow',
       },
     ],
   }),
@@ -21,26 +21,26 @@ export const lambdaRole = new aws.iam.Role("lambda-role", {
 });
 
 // Policy: CloudWatch Logs access
-export const lambdaLogsPolicy = new aws.iam.RolePolicy("lambda-logs-policy", {
+export const lambdaLogsPolicy = new aws.iam.RolePolicy('lambda-logs-policy', {
   role: lambdaRole.id,
   policy: JSON.stringify({
-    Version: "2012-10-17",
+    Version: '2012-10-17',
     Statement: [
       {
-        Effect: "Allow",
+        Effect: 'Allow',
         Action: [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents",
+          'logs:CreateLogGroup',
+          'logs:CreateLogStream',
+          'logs:PutLogEvents',
         ],
-        Resource: "arn:aws:logs:*:*:*",
+        Resource: 'arn:aws:logs:*:*:*',
       },
     ],
   }),
 });
 
 // Policy: S3 read access for email bucket
-export const lambdaS3Policy = new aws.iam.RolePolicy("lambda-s3-policy", {
+export const lambdaS3Policy = new aws.iam.RolePolicy('lambda-s3-policy', {
   role: lambdaRole.id,
   policy: pulumi.interpolate`{
     "Version": "2012-10-17",
@@ -57,13 +57,13 @@ export const lambdaS3Policy = new aws.iam.RolePolicy("lambda-s3-policy", {
 });
 
 // Lambda function
-export const boltLambda = new aws.lambda.Function("bolt-lambda", {
+export const boltLambda = new aws.lambda.Function('bolt-lambda', {
   runtime: aws.lambda.Runtime.NodeJS20dX,
-  handler: "index.handler",
+  handler: 'index.handler',
   role: lambdaRole.arn,
   code: new pulumi.asset.AssetArchive({
     // Bundled by esbuild (pnpm build:lambda)
-    "index.js": new pulumi.asset.FileAsset("../dist/index.js"),
+    'index.js': new pulumi.asset.FileAsset('../dist/index.js'),
   }),
   timeout: 30,
   memorySize: 256,

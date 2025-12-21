@@ -1,27 +1,27 @@
-import * as aws from "@pulumi/aws";
-import { emailBucket } from "./s3";
-import { boltLambda } from "./lambda";
+import * as aws from '@pulumi/aws';
+import { emailBucket } from './s3';
+import { boltLambda } from './lambda';
 
 // Permission for S3 to invoke Lambda
 export const s3LambdaPermission = new aws.lambda.Permission(
-  "s3-lambda-permission",
+  's3-lambda-permission',
   {
-    action: "lambda:InvokeFunction",
+    action: 'lambda:InvokeFunction',
     function: boltLambda.name,
-    principal: "s3.amazonaws.com",
+    principal: 's3.amazonaws.com',
     sourceArn: emailBucket.arn,
   },
 );
 
 // S3 bucket notification to trigger Lambda on object creation
 export const bucketNotification = new aws.s3.BucketNotification(
-  "email-bucket-notification",
+  'email-bucket-notification',
   {
     bucket: emailBucket.id,
     lambdaFunctions: [
       {
         lambdaFunctionArn: boltLambda.arn,
-        events: ["s3:ObjectCreated:*"],
+        events: ['s3:ObjectCreated:*'],
       },
     ],
   },
