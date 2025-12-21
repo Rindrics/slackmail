@@ -69,4 +69,3 @@ describe('createEmail', () => {
     expect(email.references).toEqual(['123@example.com', '000@example.com']);
   });
 });
-

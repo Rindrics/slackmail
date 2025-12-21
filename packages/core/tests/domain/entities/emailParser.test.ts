@@ -23,14 +23,17 @@ describe('parseEmailAddress', () => {
 
   it('handles name with special characters', () => {
     const result = parseEmailAddress('"Doe, John" <john@example.com>');
-    expect(result).toEqual({ name: '"Doe, John"', address: 'john@example.com' });
+    expect(result).toEqual({
+      name: '"Doe, John"',
+      address: 'john@example.com',
+    });
   });
 });
 
 describe('parseEmailAddresses', () => {
   it('parses multiple addresses', () => {
     const result = parseEmailAddresses(
-      'alice@example.com, Bob <bob@example.com>'
+      'alice@example.com, Bob <bob@example.com>',
     );
     expect(result).toEqual([
       { address: 'alice@example.com' },
@@ -127,7 +130,7 @@ Body`;
     const email = await parser.parse(raw);
 
     expect(email.subject).toBe(
-      'This is a very long subject that spans multiple lines'
+      'This is a very long subject that spans multiple lines',
     );
   });
 
@@ -162,4 +165,3 @@ Line 3`;
     expect(email.body.text).toBe('Line 1\n\nLine 2\n\nLine 3');
   });
 });
-

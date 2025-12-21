@@ -16,7 +16,9 @@ describe('ReceiveMailUseCase', () => {
 
   let mockStorageRepository: StorageRepository;
   let emailParser: SimpleEmailParser;
-  let mockOnEmailReceived: ReturnType<typeof vi.fn<(email: Email) => Promise<void>>>;
+  let mockOnEmailReceived: ReturnType<
+    typeof vi.fn<(email: Email) => Promise<void>>
+  >;
 
   beforeEach(() => {
     mockStorageRepository = {
@@ -25,7 +27,9 @@ describe('ReceiveMailUseCase', () => {
 
     emailParser = new SimpleEmailParser();
 
-    mockOnEmailReceived = vi.fn<(email: Email) => Promise<void>>().mockResolvedValue(undefined);
+    mockOnEmailReceived = vi
+      .fn<(email: Email) => Promise<void>>()
+      .mockResolvedValue(undefined);
   });
 
   it('should fetch, parse, and notify email reception', async () => {
@@ -37,7 +41,9 @@ describe('ReceiveMailUseCase', () => {
 
     const result = await useCase.execute({ storageKey: 'emails/test.eml' });
 
-    expect(mockStorageRepository.fetchRawEmail).toHaveBeenCalledWith('emails/test.eml');
+    expect(mockStorageRepository.fetchRawEmail).toHaveBeenCalledWith(
+      'emails/test.eml',
+    );
     expect(mockOnEmailReceived).toHaveBeenCalledWith(
       expect.objectContaining({
         messageId: 'test-123@example.com',
@@ -45,7 +51,7 @@ describe('ReceiveMailUseCase', () => {
         to: [{ address: 'recipient@example.com' }],
         subject: 'Test Subject',
         body: { text: 'Test body' },
-      })
+      }),
     );
     expect(result.email.messageId).toBe('test-123@example.com');
     expect(result.email.subject).toBe('Test Subject');
@@ -61,7 +67,9 @@ describe('ReceiveMailUseCase', () => {
       onEmailReceived: mockOnEmailReceived,
     });
 
-    await expect(useCase.execute({ storageKey: 'emails/test.eml' })).rejects.toThrow('Storage error');
+    await expect(
+      useCase.execute({ storageKey: 'emails/test.eml' }),
+    ).rejects.toThrow('Storage error');
     expect(mockOnEmailReceived).not.toHaveBeenCalled();
   });
 
@@ -75,7 +83,9 @@ describe('ReceiveMailUseCase', () => {
       onEmailReceived: mockOnEmailReceived,
     });
 
-    await expect(useCase.execute({ storageKey: 'emails/test.eml' })).rejects.toThrow('Callback error');
+    await expect(
+      useCase.execute({ storageKey: 'emails/test.eml' }),
+    ).rejects.toThrow('Callback error');
   });
 
   it('should throw error for empty storageKey', async () => {
@@ -85,8 +95,12 @@ describe('ReceiveMailUseCase', () => {
       onEmailReceived: mockOnEmailReceived,
     });
 
-    await expect(useCase.execute({ storageKey: '' })).rejects.toThrow('storageKey cannot be empty');
-    await expect(useCase.execute({ storageKey: '   ' })).rejects.toThrow('storageKey cannot be empty');
+    await expect(useCase.execute({ storageKey: '' })).rejects.toThrow(
+      'storageKey cannot be empty',
+    );
+    await expect(useCase.execute({ storageKey: '   ' })).rejects.toThrow(
+      'storageKey cannot be empty',
+    );
     expect(mockStorageRepository.fetchRawEmail).not.toHaveBeenCalled();
   });
 });
