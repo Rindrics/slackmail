@@ -1,5 +1,5 @@
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import type { StorageRepository } from '@/domain/repositories';
+import type { StorageRepository } from 'juzumaru';
 
 export class S3StorageRepository implements StorageRepository {
   private readonly client: S3Client;
