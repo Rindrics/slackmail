@@ -7,4 +7,5 @@ export const stackName = pulumi.getStack();
 export const tags = {
   Project: projectName,
   Environment: stackName,
+  repo: 'juzumaru',
 };
