@@ -45,4 +45,4 @@ Use Pulumi for infrastructure provisioning with Pulumi Cloud for state managemen
 
 ### Neutral
 
-- Infrastructure code lives in `aws/infra/` directory within the monorepo
+- Infrastructure code lives in `infra/aws/` directory within the monorepo (allowing future expansion to `infra/gcp/`, `infra/azure/`, etc.)

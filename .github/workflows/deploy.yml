@@ -5,14 +5,14 @@ on:
     branches:
       - main
     paths:
-      - 'aws/**'
+      - 'infra/aws/**'
       - 'packages/core/**'
       - '.github/workflows/deploy.yml'
   pull_request:
     branches:
       - main
     paths:
-      - 'aws/**'
+      - 'infra/aws/**'
       - 'packages/core/**'
       - '.github/workflows/deploy.yml'
 
@@ -55,7 +55,7 @@ jobs:
         with:
           command: preview
           stack-name: rindrics/juzumaru/${{ env.PULUMI_STACK }}
-          work-dir: aws/infra
+          work-dir: infra/aws
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
 
@@ -89,6 +89,6 @@ jobs:
         with:
           command: up
           stack-name: rindrics/juzumaru/${{ env.PULUMI_STACK }}
-          work-dir: aws/infra
+          work-dir: infra/aws
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}

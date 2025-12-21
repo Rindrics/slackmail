@@ -2,13 +2,15 @@
   "name": "juzumaru-aws",
   "version": "0.1.0",
   "private": true,
-  "description": "AWS implementation for juzumaru",
+  "description": "AWS implementation and infrastructure for juzumaru",
   "type": "module",
+  "main": "index.ts",
   "scripts": {
     "build": "tsc -b tsconfig.build.json",
     "build:lambda": "esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/index.js --external:@aws-sdk/*",
-    "deploy": "pnpm build:lambda && cd infra && pulumi up",
-    "deploy:preview": "pnpm build:lambda && cd infra && pulumi preview",
+    "preview": "pnpm build:lambda && pulumi preview --stack dev",
+    "up": "pnpm build:lambda && pulumi up --stack dev",
+    "destroy": "pulumi destroy --stack dev",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -17,9 +19,13 @@
     "@aws-sdk/client-s3": "3.956.0"
   },
   "devDependencies": {
-    "@types/aws-lambda": "8.10.159",
+    "@pulumi/aws": "^7.15.0",
+    "@pulumi/pulumi": "^3.113.0",
     "@smithy/util-stream": "^4.5.8",
+    "@types/aws-lambda": "8.10.159",
+    "@types/node": "^25.0.3",
     "aws-sdk-client-mock": "^4.1.0",
-    "esbuild": "0.27.2"
+    "esbuild": "0.27.2",
+    "typescript": "^5.9.3"
   }
 }

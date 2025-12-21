@@ -5,11 +5,11 @@
   "description": "Slack-powered email client monorepo",
   "type": "module",
   "scripts": {
-    "build": "tsc --build --clean && tsc -p packages/core/tsconfig.build.json && tsc -p aws/tsconfig.build.json",
-    "lint": "biome lint packages aws",
-    "format": "biome format packages aws --write",
-    "check": "biome check packages aws",
-    "fix": "biome check packages aws --write",
+    "build": "tsc --build --clean && tsc -p packages/core/tsconfig.build.json && tsc -p infra/aws/tsconfig.build.json",
+    "lint": "biome lint packages infra",
+    "format": "biome format packages infra --write",
+    "check": "biome check packages infra",
+    "fix": "biome check packages infra --write",
     "test": "pnpm -r test",
     "test:watch": "pnpm -r --parallel test:watch",
     "prepare": "husky"
