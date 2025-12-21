@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
-  SimpleEmailParser,
   parseEmailAddress,
   parseEmailAddresses,
+  SimpleEmailParser,
 } from '@/domain/entities';
 
 describe('parseEmailAddress', () => {

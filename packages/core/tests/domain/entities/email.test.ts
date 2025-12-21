@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createEmail } from '@/domain/entities';
 import type { EmailAddress } from '@/domain/entities';
+import { createEmail } from '@/domain/entities';
 
 describe('createEmail', () => {
   const from: EmailAddress = { name: 'Sender', address: 'sender@example.com' };

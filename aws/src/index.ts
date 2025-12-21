@@ -1,9 +1,9 @@
 import type { S3Event, S3Handler } from 'aws-lambda';
 import {
-  ReceiveMailUseCase,
-  SimpleEmailParser,
   createEmailReceivedHandler,
   createSlackApp,
+  ReceiveMailUseCase,
+  SimpleEmailParser,
 } from 'juzumaru';
 import { S3StorageRepository } from '@/infrastructure/s3StorageRepository';
 
