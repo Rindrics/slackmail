@@ -46,7 +46,8 @@ export class SlackPostError extends Error {
 function getSlackErrorMessage(errorCode: string): string {
   const errorMessages: Record<string, string> = {
     invalid_auth: 'Invalid Slack bot token. Please check SLACK_BOT_TOKEN.',
-    channel_not_found: 'Slack channel not found. Please check SLACK_CHANNEL.',
+    channel_not_found:
+      'Slack channel not found. Please check SLACK_CHANNEL_ID.',
     not_in_channel:
       'Bot is not a member of the channel. Please invite the bot.',
     is_archived: 'The channel has been archived.',

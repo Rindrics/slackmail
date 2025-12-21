@@ -1,0 +1,31 @@
+import * as aws from '@pulumi/aws';
+import { boltLambda } from './lambda';
+import { emailBucket } from './s3';
+
+// Permission for S3 to invoke Lambda
+export const s3LambdaPermission = new aws.lambda.Permission(
+  's3-lambda-permission',
+  {
+    action: 'lambda:InvokeFunction',
+    function: boltLambda.name,
+    principal: 's3.amazonaws.com',
+    sourceArn: emailBucket.arn,
+  },
+);
+
+// S3 bucket notification to trigger Lambda on object creation
+export const bucketNotification = new aws.s3.BucketNotification(
+  'email-bucket-notification',
+  {
+    bucket: emailBucket.id,
+    lambdaFunctions: [
+      {
+        lambdaFunctionArn: boltLambda.arn,
+        events: ['s3:ObjectCreated:*'],
+      },
+    ],
+  },
+  {
+    dependsOn: [s3LambdaPermission],
+  },
+);

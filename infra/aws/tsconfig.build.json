@@ -7,11 +7,11 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "juzumaru": ["../packages/core/dist"],
-      "juzumaru/*": ["../packages/core/dist/*"]
+      "juzumaru": ["../../packages/core/dist"],
+      "juzumaru/*": ["../../packages/core/dist/*"]
     }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "tests"],
-  "references": [{ "path": "../packages/core/tsconfig.build.json" }]
+  "references": [{ "path": "../../packages/core/tsconfig.build.json" }]
 }
