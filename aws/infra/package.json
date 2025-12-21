@@ -3,12 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "description": "Pulumi infrastructure for juzumaru AWS deployment",
-  "type": "module",
   "main": "index.ts",
   "scripts": {
-    "preview": "pulumi preview",
-    "up": "pulumi up",
-    "destroy": "pulumi destroy"
+    "preview": "pulumi preview --stack dev",
+    "up": "pulumi up --stack dev",
+    "destroy": "pulumi destroy --stack dev"
   },
   "devDependencies": {
     "@pulumi/aws": "^7.15.0",
