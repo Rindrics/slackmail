@@ -42,8 +42,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Build Lambda
-        run: pnpm --filter juzumaru-aws build:lambda
+      - name: Build
+        run: pnpm run build && pnpm --filter juzumaru-aws build:lambda
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -76,8 +76,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Build Lambda
-        run: pnpm --filter juzumaru-aws build:lambda
+      - name: Build
+        run: pnpm run build && pnpm --filter juzumaru-aws build:lambda
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
