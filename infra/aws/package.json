@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "description": "AWS implementation and infrastructure for juzumaru",
-  "type": "module",
   "main": "index.ts",
   "scripts": {
     "build": "tsc -b tsconfig.build.json",
