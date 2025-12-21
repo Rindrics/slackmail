@@ -7,8 +7,8 @@
   "scripts": {
     "build": "tsc -b tsconfig.build.json",
     "build:lambda": "esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/index.js --external:@aws-sdk/*",
-    "deploy": "pnpm build:lambda && cd infra && pulumi up",
-    "deploy:preview": "pnpm build:lambda && cd infra && pulumi preview",
+    "deploy": "pnpm build:lambda && cd ../infra/aws && pulumi up",
+    "deploy:preview": "pnpm build:lambda && cd ../infra/aws && pulumi preview",
     "test": "vitest run",
     "test:watch": "vitest"
   },

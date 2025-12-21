@@ -63,7 +63,7 @@ export const boltLambda = new aws.lambda.Function('bolt-lambda', {
   role: lambdaRole.arn,
   code: new pulumi.asset.AssetArchive({
     // Bundled by esbuild (pnpm build:lambda)
-    'index.js': new pulumi.asset.FileAsset('../dist/index.js'),
+    'index.js': new pulumi.asset.FileAsset('../../aws/dist/index.js'),
   }),
   timeout: 30,
   memorySize: 256,

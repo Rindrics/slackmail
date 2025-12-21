@@ -1,4 +1,4 @@
 packages:
   - 'packages/*'
   - 'aws'
-  - 'aws/infra'
+  - 'infra/aws'
