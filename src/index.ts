@@ -144,5 +144,7 @@ export const handler: S3Handler = async (event: S3Event) => {
     throw new BatchProcessingError(failedRecords, totalRecords);
   }
 
-  console.log(`Batch processing completed successfully: ${totalRecords} records`);
+  console.log(
+    `Batch processing completed successfully: ${totalRecords} records`,
+  );
 };
