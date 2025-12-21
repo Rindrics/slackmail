@@ -5,7 +5,7 @@
   "description": "Slack-powered email client monorepo",
   "type": "module",
   "scripts": {
-    "build": "tsc -p packages/core/tsconfig.build.json && tsc -p aws/tsconfig.build.json",
+    "build": "tsc --build --clean && tsc -p packages/core/tsconfig.build.json && tsc -p aws/tsconfig.build.json",
     "lint": "biome lint packages aws",
     "format": "biome format packages aws --write",
     "check": "biome check packages aws",
