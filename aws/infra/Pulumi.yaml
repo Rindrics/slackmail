@@ -1,0 +1,6 @@
+name: juzumaru
+runtime:
+  name: nodejs
+  options:
+    typescript: true
+description: Pulumi infrastructure for juzumaru email client
