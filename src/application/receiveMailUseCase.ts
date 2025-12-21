@@ -6,6 +6,12 @@ export interface ReceiveMailUseCaseInput {
   storageKey: string;
 }
 
+function validateInput(input: ReceiveMailUseCaseInput): void {
+  if (!input.storageKey || input.storageKey.trim().length === 0) {
+    throw new Error('storageKey cannot be empty');
+  }
+}
+
 export interface ReceiveMailUseCaseOutput {
   email: Email;
 }
@@ -34,6 +40,7 @@ export class ReceiveMailUseCase {
   async execute(
     input: ReceiveMailUseCaseInput,
   ): Promise<ReceiveMailUseCaseOutput> {
+    validateInput(input);
     const rawEmail = await this.storageRepository.fetchRawEmail(
       input.storageKey,
     );

@@ -77,4 +77,16 @@ describe('ReceiveMailUseCase', () => {
 
     await expect(useCase.execute({ storageKey: 'emails/test.eml' })).rejects.toThrow('Callback error');
   });
+
+  it('should throw error for empty storageKey', async () => {
+    const useCase = new ReceiveMailUseCase({
+      storageRepository: mockStorageRepository,
+      emailParser,
+      onEmailReceived: mockOnEmailReceived,
+    });
+
+    await expect(useCase.execute({ storageKey: '' })).rejects.toThrow('storageKey cannot be empty');
+    await expect(useCase.execute({ storageKey: '   ' })).rejects.toThrow('storageKey cannot be empty');
+    expect(mockStorageRepository.fetchRawEmail).not.toHaveBeenCalled();
+  });
 });
