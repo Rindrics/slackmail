@@ -7,41 +7,13 @@ settings:
 importers:
 
   .:
-    dependencies:
-      '@aws-sdk/client-s3':
-        specifier: 3.956.0
-        version: 3.956.0
-      '@slack/bolt':
-        specifier: 4.6.0
-        version: 4.6.0(@types/express@5.0.6)
-      '@slack/web-api':
-        specifier: 7.13.0
-        version: 7.13.0
-      html-to-text:
-        specifier: ^9.0.5
-        version: 9.0.5
     devDependencies:
       '@biomejs/biome':
         specifier: 2.3.10
         version: 2.3.10
-      '@smithy/util-stream':
-        specifier: ^4.5.8
-        version: 4.5.8
-      '@types/aws-lambda':
-        specifier: 8.10.159
-        version: 8.10.159
-      '@types/html-to-text':
-        specifier: ^9.0.4
-        version: 9.0.4
       '@types/node':
         specifier: 25.0.3
         version: 25.0.3
-      aws-sdk-client-mock:
-        specifier: ^4.1.0
-        version: 4.1.0
-      esbuild:
-        specifier: 0.27.2
-        version: 0.27.2
       husky:
         specifier: 9.1.7
         version: 9.1.7
@@ -54,6 +26,44 @@ importers:
       vitest:
         specifier: 4.0.16
         version: 4.0.16(@types/node@25.0.3)
+
+  aws:
+    dependencies:
+      '@aws-sdk/client-s3':
+        specifier: 3.956.0
+        version: 3.956.0
+      juzumaru:
+        specifier: workspace:*
+        version: link:../packages/core
+    devDependencies:
+      '@smithy/util-stream':
+        specifier: ^4.5.8
+        version: 4.5.8
+      '@types/aws-lambda':
+        specifier: 8.10.159
+        version: 8.10.159
+      aws-sdk-client-mock:
+        specifier: ^4.1.0
+        version: 4.1.0
+      esbuild:
+        specifier: 0.27.2
+        version: 0.27.2
+
+  packages/core:
+    dependencies:
+      '@slack/bolt':
+        specifier: 4.6.0
+        version: 4.6.0(@types/express@5.0.6)
+      '@slack/web-api':
+        specifier: 7.13.0
+        version: 7.13.0
+      html-to-text:
+        specifier: ^9.0.5
+        version: 9.0.5
+    devDependencies:
+      '@types/html-to-text':
+        specifier: ^9.0.4
+        version: 9.0.4
 
 packages:
 

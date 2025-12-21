@@ -52,7 +52,9 @@ describe('emailFormatter', () => {
     it('should return text and blocks', () => {
       const result = formatEmailForSlack(email);
 
-      expect(result.text).toBe('📧 Test Subject from Sender <sender@example.com>');
+      expect(result.text).toBe(
+        '📧 Test Subject from Sender <sender@example.com>',
+      );
       expect(result.blocks).toBeDefined();
       expect(result.blocks.length).toBeGreaterThan(0);
     });
@@ -60,7 +62,10 @@ describe('emailFormatter', () => {
     it('should include header block with subject', () => {
       const result = formatEmailForSlack(email);
 
-      const headerBlock = result.blocks[0] as { type: string; text: { text: string } };
+      const headerBlock = result.blocks[0] as {
+        type: string;
+        text: { text: string };
+      };
       expect(headerBlock.type).toBe('header');
       expect(headerBlock.text.text).toBe('📧 Test Subject');
     });
@@ -68,7 +73,10 @@ describe('emailFormatter', () => {
     it('should include from and to fields', () => {
       const result = formatEmailForSlack(email);
 
-      const sectionBlock = result.blocks[1] as { type: string; fields: { text: string }[] };
+      const sectionBlock = result.blocks[1] as {
+        type: string;
+        fields: { text: string }[];
+      };
       expect(sectionBlock.type).toBe('section');
       expect(sectionBlock.fields[0].text).toContain('sender@example.com');
       expect(sectionBlock.fields[1].text).toContain('recipient@example.com');
@@ -82,8 +90,10 @@ describe('emailFormatter', () => {
 
       const result = formatEmailForSlack(emailWithCc);
 
-      const ccBlock = result.blocks.find(
-        (b) => (b as { fields?: { text: string }[] }).fields?.[0]?.text?.includes('Cc:'),
+      const ccBlock = result.blocks.find((b) =>
+        (b as { fields?: { text: string }[] }).fields?.[0]?.text?.includes(
+          'Cc:',
+        ),
       );
       expect(ccBlock).toBeDefined();
     });
@@ -93,7 +103,8 @@ describe('emailFormatter', () => {
 
       const bodyBlock = result.blocks.find(
         (b) =>
-          (b as { text?: { text: string } }).text?.text === 'Hello, this is a test email.',
+          (b as { text?: { text: string } }).text?.text ===
+          'Hello, this is a test email.',
       );
       expect(bodyBlock).toBeDefined();
     });
