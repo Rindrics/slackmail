@@ -2,7 +2,7 @@
   "files": [],
   "include": [],
   "references": [
-    { "path": "packages/core" },
-    { "path": "aws" }
+    { "path": "packages/core/tsconfig.build.json" },
+    { "path": "aws/tsconfig.build.json" }
   ]
 }
