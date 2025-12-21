@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ReceiveMailUseCase } from '@/application';
 import type { Email } from '@/domain/entities';
-import { SimpleEmailParser } from '@/domain/entities/emailParser';
 import type { StorageRepository } from '@/domain/repositories';
+import { MailparserEmailParser } from '@/infrastructure';
 
 describe('ReceiveMailUseCase', () => {
   const rawEmail =
@@ -15,7 +15,7 @@ describe('ReceiveMailUseCase', () => {
     'Test body';
 
   let mockStorageRepository: StorageRepository;
-  let emailParser: SimpleEmailParser;
+  let emailParser: MailparserEmailParser;
   let mockOnEmailReceived: ReturnType<
     typeof vi.fn<(email: Email) => Promise<void>>
   >;
@@ -25,7 +25,7 @@ describe('ReceiveMailUseCase', () => {
       fetchRawEmail: vi.fn().mockResolvedValue(rawEmail),
     };
 
-    emailParser = new SimpleEmailParser();
+    emailParser = new MailparserEmailParser();
 
     mockOnEmailReceived = vi
       .fn<(email: Email) => Promise<void>>()

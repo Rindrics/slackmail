@@ -1,59 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import {
-  parseEmailAddress,
-  parseEmailAddresses,
-  SimpleEmailParser,
-} from '@/domain/entities';
+import { MailparserEmailParser } from '@/infrastructure';
 
-describe('parseEmailAddress', () => {
-  it('parses address only', () => {
-    const result = parseEmailAddress('test@example.com');
-    expect(result).toEqual({ address: 'test@example.com' });
-  });
-
-  it('parses name and address', () => {
-    const result = parseEmailAddress('John Doe <john@example.com>');
-    expect(result).toEqual({ name: 'John Doe', address: 'john@example.com' });
-  });
-
-  it('trims whitespace', () => {
-    const result = parseEmailAddress('  test@example.com  ');
-    expect(result).toEqual({ address: 'test@example.com' });
-  });
-
-  it('handles name with special characters', () => {
-    const result = parseEmailAddress('"Doe, John" <john@example.com>');
-    expect(result).toEqual({
-      name: '"Doe, John"',
-      address: 'john@example.com',
-    });
-  });
-});
-
-describe('parseEmailAddresses', () => {
-  it('parses multiple addresses', () => {
-    const result = parseEmailAddresses(
-      'alice@example.com, Bob <bob@example.com>',
-    );
-    expect(result).toEqual([
-      { address: 'alice@example.com' },
-      { name: 'Bob', address: 'bob@example.com' },
-    ]);
-  });
-
-  it('returns empty array for empty string', () => {
-    const result = parseEmailAddresses('');
-    expect(result).toEqual([]);
-  });
-
-  it('handles single address', () => {
-    const result = parseEmailAddresses('single@example.com');
-    expect(result).toEqual([{ address: 'single@example.com' }]);
-  });
-});
-
-describe('SimpleEmailParser', () => {
-  const parser = new SimpleEmailParser();
+describe('MailparserEmailParser', () => {
+  const parser = new MailparserEmailParser();
 
   it('parses a simple email', async () => {
     const raw = `From: sender@example.com
@@ -148,20 +97,47 @@ Buffer body`);
     expect(email.body.text).toBe('Buffer body');
   });
 
-  it('handles multiline body', async () => {
+  it('parses MIME multipart message', async () => {
     const raw = `From: sender@example.com
 To: recipient@example.com
-Subject: Test
-Message-ID: <123@example.com>
+Subject: Multipart Test
+Message-ID: <multipart@example.com>
+Content-Type: multipart/alternative; boundary="boundary123"
 
-Line 1
+--boundary123
+Content-Type: text/plain; charset="UTF-8"
 
-Line 2
+Hello plain text
 
-Line 3`;
+--boundary123
+Content-Type: text/html; charset="UTF-8"
+
+<div>Hello HTML</div>
+
+--boundary123--`;
 
     const email = await parser.parse(raw);
 
-    expect(email.body.text).toBe('Line 1\n\nLine 2\n\nLine 3');
+    expect(email.body.text?.trim()).toBe('Hello plain text');
+    expect(email.body.html?.trim()).toBe('<div>Hello HTML</div>');
+  });
+
+  it('parses email with display name', async () => {
+    const raw = `From: John Doe <john@example.com>
+To: Jane Doe <jane@example.com>
+Subject: Name Test
+Message-ID: <name@example.com>
+
+Body`;
+
+    const email = await parser.parse(raw);
+
+    expect(email.from).toEqual({
+      name: 'John Doe',
+      address: 'john@example.com',
+    });
+    expect(email.to).toEqual([
+      { name: 'Jane Doe', address: 'jane@example.com' },
+    ]);
   });
 });

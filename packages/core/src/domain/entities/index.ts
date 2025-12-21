@@ -1,8 +1,3 @@
 export type { Email, EmailAddress } from './email';
 export { createEmail } from './email';
 export type { EmailParser } from './emailParser';
-export {
-  parseEmailAddress,
-  parseEmailAddresses,
-  SimpleEmailParser,
-} from './emailParser';

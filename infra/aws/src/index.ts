@@ -2,8 +2,8 @@ import type { S3Event, S3Handler } from 'aws-lambda';
 import {
   createEmailReceivedHandler,
   createSlackApp,
+  MailparserEmailParser,
   ReceiveMailUseCase,
-  SimpleEmailParser,
 } from 'juzumaru';
 import { S3StorageRepository } from '@/infrastructure/s3StorageRepository';
 
@@ -109,7 +109,7 @@ export const handler: S3Handler = async (event: S3Event) => {
 
     try {
       const storageRepository = new S3StorageRepository(bucket);
-      const emailParser = new SimpleEmailParser();
+      const emailParser = new MailparserEmailParser();
       const onEmailReceived = createEmailReceivedHandler(
         app,
         config.slackChannelId,
