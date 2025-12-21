@@ -21,37 +21,30 @@ interface EnvConfig {
  * Fails fast with clear error messages if any are missing.
  */
 function loadEnvConfig(): EnvConfig {
-  const errors: string[] = [];
+  const slackSigningSecret = process.env.SLACK_SIGNING_SECRET?.trim();
+  const slackBotToken = process.env.SLACK_BOT_TOKEN?.trim();
+  const slackChannel = process.env.SLACK_CHANNEL?.trim();
 
-  const slackSigningSecret = process.env.SLACK_SIGNING_SECRET;
-  const slackBotToken = process.env.SLACK_BOT_TOKEN;
-  const slackChannel = process.env.SLACK_CHANNEL;
+  if (!slackSigningSecret || !slackBotToken || !slackChannel) {
+    const missing = [
+      !slackSigningSecret && 'SLACK_SIGNING_SECRET',
+      !slackBotToken && 'SLACK_BOT_TOKEN',
+      !slackChannel && 'SLACK_CHANNEL',
+    ].filter(Boolean);
 
-  if (!slackSigningSecret || slackSigningSecret.trim().length === 0) {
-    errors.push('SLACK_SIGNING_SECRET is required but not set');
-  }
-
-  if (!slackBotToken || slackBotToken.trim().length === 0) {
-    errors.push('SLACK_BOT_TOKEN is required but not set');
-  }
-
-  if (!slackChannel || slackChannel.trim().length === 0) {
-    errors.push('SLACK_CHANNEL is required but not set');
-  }
-
-  if (errors.length > 0) {
-    for (const error of errors) {
-      console.error(`[Config Error] ${error}`);
+    for (const name of missing) {
+      console.error(`[Config Error] ${name} is required but not set`);
     }
     throw new Error(
-      `Missing required environment variables: ${errors.join(', ')}`,
+      `Missing required environment variables: ${missing.join(', ')}`,
     );
   }
 
+  // TypeScript narrows types after the guard above
   return {
-    slackSigningSecret: slackSigningSecret!,
-    slackBotToken: slackBotToken!,
-    slackChannel: slackChannel!,
+    slackSigningSecret,
+    slackBotToken,
+    slackChannel,
   };
 }
 
