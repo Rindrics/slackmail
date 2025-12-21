@@ -4,16 +4,62 @@ import { SimpleEmailParser } from '@/domain/entities/emailParser';
 import { S3StorageRepository } from '@/infrastructure/s3StorageRepository';
 import { createEmailReceivedHandler, createSlackApp } from '@/presentation';
 
-// Environment variables
-const SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET || '';
-const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN || '';
-const SLACK_CHANNEL = process.env.SLACK_CHANNEL || '';
+/**
+ * Required environment variables configuration
+ */
+interface EnvConfig {
+  slackSigningSecret: string;
+  slackBotToken: string;
+  slackChannel: string;
+}
+
+/**
+ * Validate and load required environment variables.
+ * Fails fast with clear error messages if any are missing.
+ */
+function loadEnvConfig(): EnvConfig {
+  const errors: string[] = [];
+
+  const slackSigningSecret = process.env.SLACK_SIGNING_SECRET;
+  const slackBotToken = process.env.SLACK_BOT_TOKEN;
+  const slackChannel = process.env.SLACK_CHANNEL;
+
+  if (!slackSigningSecret || slackSigningSecret.trim().length === 0) {
+    errors.push('SLACK_SIGNING_SECRET is required but not set');
+  }
+
+  if (!slackBotToken || slackBotToken.trim().length === 0) {
+    errors.push('SLACK_BOT_TOKEN is required but not set');
+  }
+
+  if (!slackChannel || slackChannel.trim().length === 0) {
+    errors.push('SLACK_CHANNEL is required but not set');
+  }
+
+  if (errors.length > 0) {
+    for (const error of errors) {
+      console.error(`[Config Error] ${error}`);
+    }
+    throw new Error(
+      `Missing required environment variables: ${errors.join(', ')}`,
+    );
+  }
+
+  return {
+    slackSigningSecret: slackSigningSecret!,
+    slackBotToken: slackBotToken!,
+    slackChannel: slackChannel!,
+  };
+}
+
+// Validate environment variables at startup (fail fast)
+const config = loadEnvConfig();
 
 // Initialize Slack App (singleton)
 const { app } = createSlackApp({
-  signingSecret: SLACK_SIGNING_SECRET,
-  botToken: SLACK_BOT_TOKEN,
-  channel: SLACK_CHANNEL,
+  signingSecret: config.slackSigningSecret,
+  botToken: config.slackBotToken,
+  channel: config.slackChannel,
 });
 
 /**
@@ -29,7 +75,7 @@ export const handler: S3Handler = async (event: S3Event) => {
 
     const storageRepository = new S3StorageRepository(bucket);
     const emailParser = new SimpleEmailParser();
-    const onEmailReceived = createEmailReceivedHandler(app, SLACK_CHANNEL);
+    const onEmailReceived = createEmailReceivedHandler(app, config.slackChannel);
 
     const useCase = new ReceiveMailUseCase({
       storageRepository,
