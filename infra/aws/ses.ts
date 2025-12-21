@@ -57,32 +57,35 @@ export const mxRecord = new aws.route53.Record('mx-record', {
 // S3 Bucket Policy for SES
 // =============================================================================
 
-export const emailBucketPolicy = new aws.s3.BucketPolicy('email-bucket-policy', {
-  bucket: emailBucket.id,
-  policy: pulumi
-    .all([emailBucket.arn, currentIdentity])
-    .apply(([bucketArn, identity]) =>
-      JSON.stringify({
-        Version: '2012-10-17',
-        Statement: [
-          {
-            Sid: 'AllowSESPuts',
-            Effect: 'Allow',
-            Principal: {
-              Service: 'ses.amazonaws.com',
-            },
-            Action: 's3:PutObject',
-            Resource: `${bucketArn}/*`,
-            Condition: {
-              StringEquals: {
-                'AWS:SourceAccount': identity.accountId,
+export const emailBucketPolicy = new aws.s3.BucketPolicy(
+  'email-bucket-policy',
+  {
+    bucket: emailBucket.id,
+    policy: pulumi
+      .all([emailBucket.arn, currentIdentity])
+      .apply(([bucketArn, identity]) =>
+        JSON.stringify({
+          Version: '2012-10-17',
+          Statement: [
+            {
+              Sid: 'AllowSESPuts',
+              Effect: 'Allow',
+              Principal: {
+                Service: 'ses.amazonaws.com',
+              },
+              Action: 's3:PutObject',
+              Resource: `${bucketArn}/*`,
+              Condition: {
+                StringEquals: {
+                  'AWS:SourceAccount': identity.accountId,
+                },
               },
             },
-          },
-        ],
-      }),
-    ),
-});
+          ],
+        }),
+      ),
+  },
+);
 
 // =============================================================================
 // SES Receipt Rule Set
