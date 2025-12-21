@@ -1,6 +1,6 @@
 {
-  "name": "slackmail",
-  "version": "0.1.0",
+  "name": "@rindrics/slackmail",
+  "version": "0.0.2",
   "description": "Turn Slack into your email client - receive and send emails directly from Slack",
   "type": "module",
   "main": "dist/index.js",

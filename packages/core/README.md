@@ -1,6 +1,6 @@
-# slackmail
+# @rindrics/slackmail
 
-[![npm version](https://badge.fury.io/js/slackmail.svg)](https://www.npmjs.com/package/slackmail)
+[![npm version](https://badge.fury.io/js/@rindrics/slackmail.svg)](https://www.npmjs.com/package/@rindrics/slackmail)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Turn Slack into your email client - receive and send emails directly from Slack.
@@ -17,11 +17,11 @@ Turn Slack into your email client - receive and send emails directly from Slack.
 ## Installation
 
 ```bash
-npm install slackmail
+npm install @rindrics/slackmail
 # or
-pnpm add slackmail
+pnpm add @rindrics/slackmail
 # or
-yarn add slackmail
+yarn add @rindrics/slackmail
 ```
 
 ## Quick Start
@@ -32,7 +32,7 @@ import {
   createEmailReceivedHandler,
   ReceiveMailUseCase,
   SimpleEmailParser,
-} from 'slackmail';
+} from '@rindrics/slackmail';
 
 // 1. Create Slack app
 const { app } = createSlackApp({
@@ -62,7 +62,7 @@ await useCase.execute({ storageKey: 'path/to/email' });
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
-│                         slackmail                               │
+│                    @rindrics/slackmail                          │
 ├─────────────────────────────────────────────────────────────────┤
 │  Domain Layer                                                   │
 │  ├── Email entity                                               │
@@ -220,7 +220,7 @@ import {
   ReceiveMailUseCase,
   SimpleEmailParser,
   type StorageRepository,
-} from 'slackmail';
+} from '@rindrics/slackmail';
 
 // Implement StorageRepository for S3
 class S3StorageRepository implements StorageRepository {

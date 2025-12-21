@@ -32,4 +32,4 @@ jobs:
         run: pnpm run build
 
       - name: License check
-        run: pnpm --filter slackmail license:check
+        run: pnpm --filter @rindrics/slackmail license:check

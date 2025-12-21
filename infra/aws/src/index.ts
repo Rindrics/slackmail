@@ -5,7 +5,7 @@ import {
   MailparserEmailParser,
   ReceiveMailUseCase,
   SimpleEmailParser,
-} from 'slackmail';
+} from '@rindrics/slackmail';
 import { S3StorageRepository } from '@/infrastructure/s3StorageRepository';
 
 /**
