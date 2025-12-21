@@ -29,9 +29,11 @@
   "dependencies": {
     "@slack/bolt": "4.6.0",
     "@slack/web-api": "7.13.0",
-    "html-to-text": "^9.0.5"
+    "html-to-text": "9.0.5",
+    "mailparser": "3.9.1"
   },
   "devDependencies": {
-    "@types/html-to-text": "^9.0.4"
+    "@types/html-to-text": "^9.0.4",
+    "@types/mailparser": "^3.4.5"
   }
 }
