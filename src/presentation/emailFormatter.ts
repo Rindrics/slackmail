@@ -1,5 +1,34 @@
+import { convert } from 'html-to-text';
 import type { KnownBlock } from '@slack/web-api';
 import type { Email, EmailAddress } from '@/domain/entities';
+
+/**
+ * Convert HTML to plain text, handling null/undefined safely
+ */
+function convertHtmlToText(html: string): string {
+  const text = convert(html, {
+    wordwrap: false,
+    selectors: [
+      { selector: 'a', options: { ignoreHref: true } },
+      { selector: 'img', format: 'skip' },
+    ],
+  });
+  // Trim excessive whitespace and normalize newlines
+  return text.replace(/\n{3,}/g, '\n\n').trim();
+}
+
+/**
+ * Get email body as plain text
+ */
+function getEmailBodyText(body: Email['body']): string {
+  if (body.text) {
+    return body.text.trim();
+  }
+  if (body.html) {
+    return convertHtmlToText(body.html);
+  }
+  return '(no body)';
+}
 
 /**
  * Format email address for display
@@ -67,6 +96,8 @@ export function formatEmailForSlack(email: Email): {
     });
   }
 
+  const bodyText = getEmailBodyText(email.body);
+
   blocks.push(
     {
       type: 'divider',
@@ -75,7 +106,7 @@ export function formatEmailForSlack(email: Email): {
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: email.body.text || email.body.html || '(no body)',
+        text: bodyText,
       },
     },
   );
