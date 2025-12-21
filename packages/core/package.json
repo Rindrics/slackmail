@@ -12,6 +12,7 @@
     ".": "./dist/index.js",
     "./domain": "./dist/domain/index.js",
     "./application": "./dist/application/index.js",
+    "./infrastructure": "./dist/infrastructure/index.js",
     "./presentation": "./dist/presentation/index.js"
   },
   "scripts": {

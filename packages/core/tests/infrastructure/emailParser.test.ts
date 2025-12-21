@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { SimpleEmailParser } from '@/domain/entities';
+import { MailparserEmailParser } from '@/infrastructure';
 
-describe('SimpleEmailParser', () => {
-  const parser = new SimpleEmailParser();
+describe('MailparserEmailParser', () => {
+  const parser = new MailparserEmailParser();
 
   it('parses a simple email', async () => {
     const raw = `From: sender@example.com
@@ -118,8 +118,8 @@ Content-Type: text/html; charset="UTF-8"
 
     const email = await parser.parse(raw);
 
-    expect(email.body.text).toBe('Hello plain text');
-    expect(email.body.html).toBe('<div>Hello HTML</div>');
+    expect(email.body.text?.trim()).toBe('Hello plain text');
+    expect(email.body.html?.trim()).toBe('<div>Hello HTML</div>');
   });
 
   it('parses email with display name', async () => {

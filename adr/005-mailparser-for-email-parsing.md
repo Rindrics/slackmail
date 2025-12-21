@@ -38,7 +38,14 @@ The simple parser displayed the raw MIME boundary markers instead of extracting 
 
 ## Decision
 
-Use the `mailparser` library for email parsing.
+Use the `mailparser` library for email parsing, with the implementation placed in the infrastructure layer to keep the domain layer free of external dependencies.
+
+### Layer Separation
+
+- **Domain layer** (`domain/entities/emailParser.ts`): Defines only the `EmailParser` interface
+- **Infrastructure layer** (`infrastructure/emailParser.ts`): Contains `MailparserEmailParser` implementation
+
+This follows the Dependency Inversion Principle (DIP) - the domain defines the contract, and infrastructure provides the implementation.
 
 ## Consequences
 
@@ -49,6 +56,7 @@ Use the `mailparser` library for email parsing.
 - **Encoding support**: Handles character encodings and transfer encodings
 - **Battle-tested**: Widely used in production (2M+ weekly downloads)
 - **Attachment support**: Can extract attachments if needed in the future
+- **Clean architecture**: Domain layer remains pure and testable without external dependencies
 
 ### Negative
 
@@ -57,5 +65,5 @@ Use the `mailparser` library for email parsing.
 
 ### Neutral
 
-- The `EmailParser` interface remains unchanged; only the implementation changes
-- Existing tests may need updates to reflect correct parsing behavior
+- The `EmailParser` interface remains in domain; implementation moved to infrastructure
+- Consumers import the implementation from the infrastructure layer
