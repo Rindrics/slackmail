@@ -4,7 +4,8 @@ import {
   createSlackApp,
   MailparserEmailParser,
   ReceiveMailUseCase,
-} from 'juzumaru';
+  SimpleEmailParser,
+} from 'slackmail';
 import { S3StorageRepository } from '@/infrastructure/s3StorageRepository';
 
 /**
