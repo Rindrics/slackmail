@@ -62,10 +62,8 @@ export const boltLambda = new aws.lambda.Function("bolt-lambda", {
   handler: "index.handler",
   role: lambdaRole.arn,
   code: new pulumi.asset.AssetArchive({
-    // Placeholder: will be replaced by esbuild output
-    "index.js": new pulumi.asset.StringAsset(
-      'exports.handler = async () => ({ statusCode: 200, body: "placeholder" });',
-    ),
+    // Bundled by esbuild (pnpm build:lambda)
+    "index.js": new pulumi.asset.FileAsset("../dist/index.js"),
   }),
   timeout: 30,
   memorySize: 256,
