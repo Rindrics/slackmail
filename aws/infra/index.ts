@@ -1,10 +1,15 @@
-import * as pulumi from "@pulumi/pulumi";
+import { projectName, stackName } from "./config";
+import { emailBucket } from "./s3";
+import { boltLambda, lambdaRole } from "./lambda";
 
-// Stack configuration
-const config = new pulumi.Config();
-const projectName = pulumi.getProject();
-const stackName = pulumi.getStack();
+// =============================================================================
+// Exports
+// =============================================================================
 
-// Export stack information
 export const project = projectName;
 export const stack = stackName;
+export const emailBucketName = emailBucket.bucket;
+export const emailBucketArn = emailBucket.arn;
+export const lambdaFunctionName = boltLambda.name;
+export const lambdaFunctionArn = boltLambda.arn;
+export const lambdaRoleArn = lambdaRole.arn;
