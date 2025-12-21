@@ -1,2 +1,2 @@
-export * from './slackApp';
 export * from './emailFormatter';
+export * from './slackApp';
