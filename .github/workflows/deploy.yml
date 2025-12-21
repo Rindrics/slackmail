@@ -17,7 +17,7 @@ on:
       - '.github/workflows/deploy.yml'
 
 env:
-  PULUMI_STACK: dev
+  PULUMI_STACK: prod
   AWS_REGION: ap-northeast-1
 
 permissions:
