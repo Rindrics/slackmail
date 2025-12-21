@@ -1,6 +1,12 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
-import { stackName, tags } from './config';
+import {
+  slackBotToken,
+  slackChannelId,
+  slackSigningSecret,
+  stackName,
+  tags,
+} from './config';
 import { emailBucket } from './s3';
 
 // Get AWS region and account ID for constructing ARNs
@@ -85,6 +91,9 @@ export const boltLambda = new aws.lambda.Function('bolt-lambda', {
     variables: {
       NODE_ENV: stackName,
       EMAIL_BUCKET_NAME: emailBucket.bucket,
+      SLACK_SIGNING_SECRET: slackSigningSecret,
+      SLACK_BOT_TOKEN: slackBotToken,
+      SLACK_CHANNEL_ID: slackChannelId,
     },
   },
   tags,

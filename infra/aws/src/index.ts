@@ -13,7 +13,7 @@ import { S3StorageRepository } from '@/infrastructure/s3StorageRepository';
 interface EnvConfig {
   slackSigningSecret: string;
   slackBotToken: string;
-  slackChannel: string;
+  slackChannelId: string;
 }
 
 /**
@@ -23,13 +23,13 @@ interface EnvConfig {
 function loadEnvConfig(): EnvConfig {
   const slackSigningSecret = process.env.SLACK_SIGNING_SECRET?.trim();
   const slackBotToken = process.env.SLACK_BOT_TOKEN?.trim();
-  const slackChannel = process.env.SLACK_CHANNEL?.trim();
+  const slackChannelId = process.env.SLACK_CHANNEL_ID?.trim();
 
-  if (!slackSigningSecret || !slackBotToken || !slackChannel) {
+  if (!slackSigningSecret || !slackBotToken || !slackChannelId) {
     const missing = [
       !slackSigningSecret && 'SLACK_SIGNING_SECRET',
       !slackBotToken && 'SLACK_BOT_TOKEN',
-      !slackChannel && 'SLACK_CHANNEL',
+      !slackChannelId && 'SLACK_CHANNEL_ID',
     ].filter(Boolean);
 
     for (const name of missing) {
@@ -44,7 +44,7 @@ function loadEnvConfig(): EnvConfig {
   return {
     slackSigningSecret,
     slackBotToken,
-    slackChannel,
+    slackChannelId,
   };
 }
 
@@ -55,7 +55,7 @@ const config = loadEnvConfig();
 const { app } = createSlackApp({
   signingSecret: config.slackSigningSecret,
   botToken: config.slackBotToken,
-  channel: config.slackChannel,
+  channel: config.slackChannelId,
 });
 
 /**
@@ -112,7 +112,7 @@ export const handler: S3Handler = async (event: S3Event) => {
       const emailParser = new SimpleEmailParser();
       const onEmailReceived = createEmailReceivedHandler(
         app,
-        config.slackChannel,
+        config.slackChannelId,
       );
 
       const useCase = new ReceiveMailUseCase({
