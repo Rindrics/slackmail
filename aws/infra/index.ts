@@ -1,4 +1,4 @@
-import { api, stage } from './apigateway';
+import { stage } from './apigateway';
 import { projectName, stackName } from './config';
 import { boltLambda, lambdaRole } from './lambda';
 import { emailBucket } from './s3';
