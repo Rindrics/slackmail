@@ -30,3 +30,6 @@ jobs:
 
       - name: TypeScript check
         run: pnpm run build
+
+      - name: License check
+        run: pnpm --filter slackmail license:check
