@@ -1,5 +1,5 @@
-import { convert } from 'html-to-text';
 import type { KnownBlock } from '@slack/web-api';
+import { convert } from 'html-to-text';
 import type { Email, EmailAddress } from '@/domain/entities';
 
 /**

@@ -47,7 +47,8 @@ function getSlackErrorMessage(errorCode: string): string {
   const errorMessages: Record<string, string> = {
     invalid_auth: 'Invalid Slack bot token. Please check SLACK_BOT_TOKEN.',
     channel_not_found: 'Slack channel not found. Please check SLACK_CHANNEL.',
-    not_in_channel: 'Bot is not a member of the channel. Please invite the bot.',
+    not_in_channel:
+      'Bot is not a member of the channel. Please invite the bot.',
     is_archived: 'The channel has been archived.',
     msg_too_long: 'Message is too long for Slack.',
     rate_limited: 'Rate limited by Slack API. Please retry later.',
@@ -204,10 +205,7 @@ export function createEmailReceivedHandler(
             'not_in_channel',
             'is_archived',
           ];
-          if (
-            lastError.code &&
-            nonRetryableCodes.includes(lastError.code)
-          ) {
+          if (lastError.code && nonRetryableCodes.includes(lastError.code)) {
             break;
           }
         }
