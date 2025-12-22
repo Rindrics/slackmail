@@ -59,7 +59,7 @@
   },
   "homepage": "https://github.com/Rindrics/juzumaru/tree/main/packages/core#readme",
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=18.0.0"
   },
   "dependencies": {
     "@slack/bolt": "4.6.0",
