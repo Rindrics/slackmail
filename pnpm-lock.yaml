@@ -32,7 +32,7 @@ importers:
       '@aws-sdk/client-s3':
         specifier: 3.956.0
         version: 3.956.0
-      slackmail:
+      '@rindrics/slackmail':
         specifier: workspace:*
         version: link:../../packages/core
     devDependencies:
