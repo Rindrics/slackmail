@@ -1,7 +1,7 @@
 {
-  "name": "juzumaru",
+  "name": "@rindrics/slackmail",
   "version": "0.1.0",
-  "description": "Slack-powered email client with pluggable infrastructure",
+  "description": "Turn Slack into your email client - receive and send emails directly from Slack",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -9,24 +9,58 @@
     "dist"
   ],
   "exports": {
-    ".": "./dist/index.js",
-    "./domain": "./dist/domain/index.js",
-    "./application": "./dist/application/index.js",
-    "./infrastructure": "./dist/infrastructure/index.js",
-    "./presentation": "./dist/presentation/index.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./domain": {
+      "types": "./dist/domain/index.d.ts",
+      "import": "./dist/domain/index.js"
+    },
+    "./application": {
+      "types": "./dist/application/index.d.ts",
+      "import": "./dist/application/index.js"
+    },
+    "./infrastructure": {
+      "types": "./dist/infrastructure/index.d.ts",
+      "import": "./dist/infrastructure/index.js"
+    },
+    "./presentation": {
+      "types": "./dist/presentation/index.d.ts",
+      "import": "./dist/presentation/index.js"
+    }
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "license:check": "license-checker-rseidelsohn --production --onlyAllow 'MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;0BSD'",
+    "license:summary": "license-checker-rseidelsohn --production --summary",
+    "prepublishOnly": "pnpm run build && pnpm run license:check"
   },
   "keywords": [
     "slack",
     "email",
-    "bot"
+    "mail",
+    "email-client",
+    "slack-integration",
+    "email-to-slack",
+    "slack-bot"
   ],
-  "author": "",
+  "author": "Rindrics",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rindrics/juzumaru.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/Rindrics/juzumaru/issues"
+  },
+  "homepage": "https://github.com/Rindrics/juzumaru/tree/main/packages/core#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "@slack/bolt": "4.6.0",
     "@slack/web-api": "7.13.0",
@@ -35,6 +69,7 @@
   },
   "devDependencies": {
     "@types/html-to-text": "^9.0.4",
-    "@types/mailparser": "^3.4.5"
+    "@types/mailparser": "^3.4.5",
+    "license-checker-rseidelsohn": "^4.4.2"
   }
 }

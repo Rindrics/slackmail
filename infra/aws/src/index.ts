@@ -1,10 +1,10 @@
-import type { S3Event, S3Handler } from 'aws-lambda';
 import {
   createEmailReceivedHandler,
   createSlackApp,
   MailparserEmailParser,
   ReceiveMailUseCase,
-} from 'juzumaru';
+} from '@rindrics/slackmail';
+import type { S3Event, S3Handler } from 'aws-lambda';
 import { S3StorageRepository } from '@/infrastructure/s3StorageRepository';
 
 /**
