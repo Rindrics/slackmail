@@ -21,6 +21,10 @@
       "types": "./dist/application/index.d.ts",
       "import": "./dist/application/index.js"
     },
+    "./infrastructure": {
+      "types": "./dist/infrastructure/index.d.ts",
+      "import": "./dist/infrastructure/index.js"
+    },
     "./presentation": {
       "types": "./dist/presentation/index.d.ts",
       "import": "./dist/presentation/index.js"
