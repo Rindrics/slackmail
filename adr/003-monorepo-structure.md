@@ -8,7 +8,7 @@ Accepted
 
 We want to:
 
-1. Publish the core logic as an npm package (`juzumaru`) for reusability and usage tracking
+1. Publish the core logic as an npm package (`slackmail`) for reusability and usage tracking
 2. Keep AWS-specific implementation (S3, Lambda) and infrastructure (CDKTF) in the same repository
 3. Support future cloud providers (GCP, Azure) without increasing bundle size
 4. Maintain simplicity in development workflow
@@ -24,9 +24,9 @@ Options considered:
 We will use a **pnpm monorepo** structure:
 
 ```text
-juzumaru/
+slackmail/
 ├── packages/
-│   └── core/                 # npm: juzumaru (publishable)
+│   └── core/                 # npm: slackmail (publishable)
 │       ├── src/
 │       │   ├── domain/       # Email, EmailParser, StorageRepository interface
 │       │   ├── application/  # ReceiveMailUseCase
@@ -37,7 +37,7 @@ juzumaru/
 │   │   ├── infrastructure/   # S3StorageRepository
 │   │   └── index.ts          # Lambda handler
 │   ├── infra/                # CDKTF
-│   └── package.json          # depends on "juzumaru": "workspace:*"
+│   └── package.json          # depends on "slackmail": "workspace:*"
 ├── pnpm-workspace.yaml
 └── package.json              # root (shared devDeps)
 ```

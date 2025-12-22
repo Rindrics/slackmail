@@ -92,7 +92,7 @@ export const emailBucketPolicy = new aws.s3.BucketPolicy(
 // =============================================================================
 
 export const receiptRuleSet = new aws.ses.ReceiptRuleSet('receipt-rule-set', {
-  ruleSetName: 'juzumaru-rules',
+  ruleSetName: 'slackmail-rules',
 });
 
 // Activate the rule set

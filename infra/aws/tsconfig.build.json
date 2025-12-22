@@ -7,8 +7,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "juzumaru": ["../../packages/core/dist"],
-      "juzumaru/*": ["../../packages/core/dist/*"]
+      "slackmail": ["../../packages/core/dist"],
+      "slackmail/*": ["../../packages/core/dist/*"]
     }
   },
   "include": ["src/**/*"],

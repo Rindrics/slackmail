@@ -1,4 +1,4 @@
-# juzumaru
+# @rindrics/slackmail
 
 Slack-powered email client with pluggable infrastructure.
 
@@ -87,7 +87,7 @@ OIDC authentication is recommended for GitHub Actions deployments:
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
         },
         "StringLike": {
-          "token.actions.githubusercontent.com:sub": "repo:YOUR_ORG/juzumaru:*"
+          "token.actions.githubusercontent.com:sub": "repo:YOUR_ORG/slackmail:*"
         }
       }
     }
@@ -99,7 +99,7 @@ OIDC authentication is recommended for GitHub Actions deployments:
 
 1. Create an account at [Pulumi Cloud](https://app.pulumi.com/)
 2. Generate an Access Token → `PULUMI_ACCESS_TOKEN`
-3. Create a stack (e.g., `rindrics/juzumaru/dev`)
+3. Create a stack (e.g., `rindrics/slackmail/dev`)
 
 ### 4. Route53 Setup
 

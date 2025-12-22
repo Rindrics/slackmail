@@ -1,6 +1,6 @@
-name: juzumaru
+name: slackmail
 runtime:
   name: nodejs
   options:
     typescript: true
-description: Pulumi infrastructure for juzumaru email client
+description: Pulumi infrastructure for @rindrics/slackmail email client

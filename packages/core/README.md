@@ -178,7 +178,7 @@ interface EmailAddress {
 
 Want a complete, production-ready setup with AWS infrastructure (SES, S3, Lambda)?
 
-👉 **Fork the [juzumaru](https://github.com/Rindrics/juzumaru) repository**
+👉 **Fork the [Rindrics/slackmail](https://github.com/Rindrics/slackmail) repository**
 
 The repository includes:
 - 🏗️ **Pulumi IaC** - S3, Lambda, SES, Route53, IAM
@@ -187,14 +187,14 @@ The repository includes:
 - 📦 **Ready to deploy** - Just configure your secrets and deploy
 
 ```bash
-git clone https://github.com/Rindrics/juzumaru.git
-cd juzumaru
+git clone https://github.com/Rindrics/slackmail.git
+cd slackmail
 pnpm install
 # Configure your AWS and Slack credentials, then:
 cd infra/aws && pnpm run up
 ```
 
-See the [repository README](https://github.com/Rindrics/juzumaru#readme) for detailed setup instructions.
+See the [repository README](https://github.com/Rindrics/slackmail#readme) for detailed setup instructions.
 
 ## Slack App Setup
 

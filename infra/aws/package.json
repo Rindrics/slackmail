@@ -1,5 +1,5 @@
 {
-  "name": "juzumaru-aws",
+  "name": "slackmail-aws",
   "version": "0.1.0",
   "private": true,
   "description": "AWS implementation and infrastructure for `@rindrics/slackmail`",

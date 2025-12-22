@@ -84,4 +84,4 @@ jobs:
         run: pnpm run build
 
       - name: Test infra/aws
-        run: pnpm --filter juzumaru-aws test
+        run: pnpm --filter slackmail-aws test

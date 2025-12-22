@@ -28,5 +28,5 @@ export const slackChannelId = getConfig('slackChannelId', 'SLACK_CHANNEL_ID');
 export const tags = {
   Project: projectName,
   Environment: stackName,
-  repo: 'juzumaru',
+  repo: 'slackmail',
 };
