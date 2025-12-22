@@ -56,5 +56,29 @@ jobs:
       - name: Build
         run: pnpm run build
 
-      - name: Test
-        run: pnpm run test
+      # Test only the npm package across Node versions
+      # infra/aws is private and only needs to work with the project's Node version
+      - name: Test @rindrics/slackmail
+        run: pnpm --filter @rindrics/slackmail test
+
+  test-infra:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.node-version'
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Test infra/aws
+        run: pnpm --filter juzumaru-aws test
