@@ -1,7 +1,7 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 
-import { emailDomain, route53ZoneId, tags } from './config';
+import { emailDomain, route53ZoneId } from './config';
 import { emailBucket } from './s3';
 
 // Get current AWS region and account
