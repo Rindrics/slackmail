@@ -1,5 +1,5 @@
 {
-  "name": "juzumaru-monorepo",
+  "name": "slackmail-monorepo",
   "version": "0.1.0",
   "private": true,
   "description": "Slack-powered email client monorepo",

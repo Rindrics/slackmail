@@ -43,7 +43,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Build
-        run: pnpm run build && pnpm --filter juzumaru-aws build:lambda
+        run: pnpm run build && pnpm --filter slackmail-aws build:lambda
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -54,7 +54,7 @@ jobs:
       - uses: pulumi/actions@v6
         with:
           command: preview
-          stack-name: rindrics/juzumaru/${{ env.PULUMI_STACK }}
+          stack-name: rindrics/slackmail/${{ env.PULUMI_STACK }}
           work-dir: infra/aws
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
@@ -82,7 +82,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Build
-        run: pnpm run build && pnpm --filter juzumaru-aws build:lambda
+        run: pnpm run build && pnpm --filter slackmail-aws build:lambda
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -93,7 +93,7 @@ jobs:
       - uses: pulumi/actions@v6
         with:
           command: up
-          stack-name: rindrics/juzumaru/${{ env.PULUMI_STACK }}
+          stack-name: rindrics/slackmail/${{ env.PULUMI_STACK }}
           work-dir: infra/aws
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
