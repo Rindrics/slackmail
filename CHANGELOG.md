@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.1.4](https://github.com/Rindrics/slackmail/compare/v0.1.3...v0.1.4) - 2025-12-23
+- Use PAT for whole workflow by @Rindrics in https://github.com/Rindrics/slackmail/pull/60
+- Add GITHUB_TOKEN environment variable to tagpr action by @Rindrics in https://github.com/Rindrics/slackmail/pull/61
+
 ## [v0.1.3](https://github.com/Rindrics/slackmail/compare/v0.1.2...v0.1.3) - 2025-12-23
 - Enable workflow dispatch by @Rindrics in https://github.com/Rindrics/slackmail/pull/57
 - Adjust workflows by @Rindrics in https://github.com/Rindrics/slackmail/pull/59
