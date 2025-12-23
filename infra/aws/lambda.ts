@@ -78,7 +78,7 @@ export const lambdaS3Policy = new aws.iam.RolePolicy('lambda-s3-policy', {
 
 // Lambda function
 export const boltLambda = new aws.lambda.Function('bolt-lambda', {
-  runtime: aws.lambda.Runtime.NodeJS20dX,
+  runtime: aws.lambda.Runtime.NodeJS24dX,
   handler: 'index.handler',
   role: lambdaRole.arn,
   code: new pulumi.asset.AssetArchive({
