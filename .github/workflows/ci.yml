@@ -12,7 +12,30 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      core: ${{ steps.filter.outputs.core }}
+      infra: ${{ steps.filter.outputs.infra }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            core:
+              - 'packages/core/**'
+              - 'pnpm-lock.yaml'
+              - '.github/workflows/ci.yml'
+            infra:
+              - 'infra/aws/**'
+              - 'pnpm-lock.yaml'
+              - '.github/workflows/ci.yml'
+
   check:
+    needs: changes
+    if: needs.changes.outputs.core == 'true' || needs.changes.outputs.infra == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -38,6 +61,8 @@ jobs:
         run: pnpm --filter @rindrics/slackmail license:check
 
   test:
+    needs: changes
+    if: needs.changes.outputs.core == 'true'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -59,12 +84,12 @@ jobs:
       - name: Build
         run: pnpm run build
 
-      # Test only the npm package across Node versions
-      # infra/aws is private and only needs to work with the project's Node version
       - name: Test @rindrics/slackmail
         run: pnpm --filter @rindrics/slackmail test
 
   test-infra:
+    needs: changes
+    if: needs.changes.outputs.core == 'true' || needs.changes.outputs.infra == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
