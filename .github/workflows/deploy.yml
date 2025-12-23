@@ -17,7 +17,8 @@ on:
       - '.github/workflows/deploy.yml'
 
 env:
-  PULUMI_STACK: prod
+  PULUMI_STACK_NAME: juzumaru
+  PULUMI_STACK_ENV: prod
   AWS_REGION: ap-northeast-1
 
 permissions:
@@ -54,7 +55,7 @@ jobs:
       - uses: pulumi/actions@v6
         with:
           command: preview
-          stack-name: rindrics/slackmail/${{ env.PULUMI_STACK }}
+          stack-name: rindrics/${{ env.PULUMI_STACK_NAME }}/${{{ env.PULUMI_STACK_ENV}}}
           work-dir: infra/aws
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
@@ -93,7 +94,7 @@ jobs:
       - uses: pulumi/actions@v6
         with:
           command: up
-          stack-name: rindrics/slackmail/${{ env.PULUMI_STACK }}
+          stack-name: rindrics/${{ env.PULUMI_STACK_NAME }}/${{{ env.PULUMI_STACK_ENV}}}
           work-dir: infra/aws
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
