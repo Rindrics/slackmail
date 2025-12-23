@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.1.2](https://github.com/Rindrics/slackmail/compare/v0.1.1...v0.1.2) - 2025-12-23
+- Use PAT to avoid GitHub workflow circuit braker by @Rindrics in https://github.com/Rindrics/slackmail/pull/55
+
 ## [v0.1.1](https://github.com/Rindrics/slackmail/compare/v0.1.0...v0.1.1) - 2025-12-23
 - Prepare for  publishing to npm by @Rindrics in https://github.com/Rindrics/slackmail/pull/48
 - Revert Pulumi stack name to `juzumaru` by @Rindrics in https://github.com/Rindrics/slackmail/pull/50
