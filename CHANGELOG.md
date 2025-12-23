@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.1.3](https://github.com/Rindrics/slackmail/compare/v0.1.2...v0.1.3) - 2025-12-23
+- Enable workflow dispatch by @Rindrics in https://github.com/Rindrics/slackmail/pull/57
+- Adjust workflows by @Rindrics in https://github.com/Rindrics/slackmail/pull/59
+
 ## [v0.1.2](https://github.com/Rindrics/slackmail/compare/v0.1.1...v0.1.2) - 2025-12-23
 - Use PAT to avoid GitHub workflow circuit braker by @Rindrics in https://github.com/Rindrics/slackmail/pull/55
 
