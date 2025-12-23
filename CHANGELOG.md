@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.1.1](https://github.com/Rindrics/slackmail/compare/v0.1.0...v0.1.1) - 2025-12-23
+- Prepare for  publishing to npm by @Rindrics in https://github.com/Rindrics/slackmail/pull/48
+- Revert Pulumi stack name to `juzumaru` by @Rindrics in https://github.com/Rindrics/slackmail/pull/50
+- Correct syntax by @Rindrics in https://github.com/Rindrics/slackmail/pull/51
+- Adjust Pulumi integration by @Rindrics in https://github.com/Rindrics/slackmail/pull/52
+- Upgrade Node.js on Lambda to `v22` by @Rindrics in https://github.com/Rindrics/slackmail/pull/53
+- Upgrade Node.js on Lambda to `v22` by @Rindrics in https://github.com/Rindrics/slackmail/pull/54
+
 ## [v0.1.0](https://github.com/Rindrics/juzumaru/commits/v0.1.0) - 2025-12-22
 - Configure tagpr by @Rindrics in https://github.com/Rindrics/juzumaru/pull/28
 - Configure tagpr by @Rindrics in https://github.com/Rindrics/juzumaru/pull/29
