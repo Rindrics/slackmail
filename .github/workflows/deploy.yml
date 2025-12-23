@@ -17,7 +17,7 @@ on:
       - '.github/workflows/deploy.yml'
 
 env:
-  PULUMI_STACK_NAME: juzumaru
+  PULUMI_STACK_NAME: slackmail
   PULUMI_STACK_ENV: prod
   AWS_REGION: ap-northeast-1
 
