@@ -1,22 +1,26 @@
+import type { S3Handler } from 'aws-lambda';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock Sentry module before any imports
 vi.mock('@sentry/serverless', () => ({
-  init: vi.fn(),
-  wrapHandler: vi.fn((handler) => handler),
-  setTag: vi.fn(),
-  setContext: vi.fn(),
-  addBreadcrumb: vi.fn(),
-  captureException: vi.fn(),
+  AWSLambda: {
+    init: vi.fn(),
+    wrapHandler: vi.fn((handler) => handler),
+    setTag: vi.fn(),
+    setContext: vi.fn(),
+    addBreadcrumb: vi.fn(),
+    captureException: vi.fn(),
+  },
 }));
 
 describe('Sentry Integration', () => {
-  let Sentry: typeof import('@sentry/serverless');
-  let handler: any;
+  let AWSLambda: typeof import('@sentry/serverless').AWSLambda;
+  let handler: S3Handler;
 
   beforeAll(async () => {
     // Import modules after mocks are set up
-    Sentry = await import('@sentry/serverless');
+    const SentryModule = await import('@sentry/serverless');
+    AWSLambda = SentryModule.AWSLambda;
     const indexModule = await import('../../src/index.js');
     handler = indexModule.handler;
   });
@@ -25,7 +29,7 @@ describe('Sentry Integration', () => {
     it('should initialize @sentry/serverless with DSN from SENTRY_DSN environment variable at module level', () => {
       // This test verifies initialization behavior
       // Module-level init happens on import when SENTRY_DSN is set
-      const mockInit = vi.mocked(Sentry.init);
+      const mockInit = vi.mocked(AWSLambda.init);
 
       // If SENTRY_DSN was set, init should have been called
       if (process.env.SENTRY_DSN) {
@@ -37,7 +41,7 @@ describe('Sentry Integration', () => {
     });
 
     it('should set environment tag to "production" when initializing Sentry', () => {
-      const mockInit = vi.mocked(Sentry.init);
+      const mockInit = vi.mocked(AWSLambda.init);
       const initCall = mockInit.mock.calls[0];
 
       if (process.env.SENTRY_DSN && initCall) {
@@ -52,9 +56,9 @@ describe('Sentry Integration', () => {
     });
 
     it('should use @sentry/serverless default AWS Lambda integrations (auto-wrap handler)', () => {
-      const mockWrapHandler = vi.mocked(Sentry.wrapHandler);
+      const mockWrapHandler = vi.mocked(AWSLambda.wrapHandler);
 
-      // Handler should be wrapped with Sentry.wrapHandler
+      // Handler should be wrapped with AWSLambda.wrapHandler
       expect(mockWrapHandler).toHaveBeenCalled();
     });
 
@@ -67,7 +71,7 @@ describe('Sentry Integration', () => {
 
     it('should log warning and continue when SENTRY_DSN has invalid format (fail-safe)', () => {
       // Invalid DSN is caught in try-catch and logged as warning
-      // Sentry.init throws but Lambda continues functioning
+      // AWSLambda.init throws but Lambda continues functioning
       // Verified through implementation code review
       expect(true).toBe(true); // Verified through code review
     });
@@ -79,8 +83,8 @@ describe('Sentry Integration', () => {
     });
 
     it('should capture BatchProcessingError with failed records context (bucket, key, error message) in catch block', () => {
-      const mockCaptureException = vi.mocked(Sentry.captureException);
-      const mockSetContext = vi.mocked(Sentry.setContext);
+      const mockCaptureException = vi.mocked(AWSLambda.captureException);
+      const mockSetContext = vi.mocked(AWSLambda.setContext);
 
       // Verify setContext is called for failed records
       // This is integration-tested through handler execution
@@ -96,8 +100,8 @@ describe('Sentry Integration', () => {
     });
 
     it('should capture S3 fetch errors with bucket and key as tags in catch block', () => {
-      const mockSetTag = vi.mocked(Sentry.setTag);
-      const mockCaptureException = vi.mocked(Sentry.captureException);
+      const mockSetTag = vi.mocked(AWSLambda.setTag);
+      const mockCaptureException = vi.mocked(AWSLambda.captureException);
 
       // S3 errors should trigger setTag for bucket and key
       expect(mockSetTag).toBeDefined();
@@ -105,8 +109,8 @@ describe('Sentry Integration', () => {
     });
 
     it('should capture email parsing errors with storage key as context in catch block', () => {
-      const mockSetTag = vi.mocked(Sentry.setTag);
-      const mockCaptureException = vi.mocked(Sentry.captureException);
+      const mockSetTag = vi.mocked(AWSLambda.setTag);
+      const mockCaptureException = vi.mocked(AWSLambda.captureException);
 
       // Parsing errors should be captured with S3 key context
       expect(mockSetTag).toBeDefined();
@@ -121,27 +125,27 @@ describe('Sentry Integration', () => {
   });
 
   describe('Context Enrichment', () => {
-    it('should add S3 event metadata (bucket, key) as breadcrumbs using Sentry.addBreadcrumb() in catch block', () => {
-      const mockAddBreadcrumb = vi.mocked(Sentry.addBreadcrumb);
+    it('should add S3 event metadata (bucket, key) as breadcrumbs using AWSLambda.addBreadcrumb() in catch block', () => {
+      const mockAddBreadcrumb = vi.mocked(AWSLambda.addBreadcrumb);
 
       // Breadcrumb is added before captureException with bucket/key info
       expect(mockAddBreadcrumb).toBeDefined();
     });
 
-    it('should add email metadata (messageId, from, subject) to error context using Sentry.setContext() before captureException()', () => {
+    it('should add email metadata (messageId, from, subject) to error context using AWSLambda.setContext() before captureException()', () => {
       // Note: Current implementation focuses on S3 context
       // Email metadata enrichment is a future enhancement
       expect(true).toBe(true); // Future enhancement
     });
 
-    it('should add Lambda request ID to error tags using Sentry.setTag() (auto-captured by @sentry/serverless)', () => {
+    it('should add Lambda request ID to error tags using AWSLambda.setTag() (auto-captured by @sentry/serverless)', () => {
       // @sentry/serverless automatically captures Lambda context
       // Including request ID, function name, AWS region
       expect(true).toBe(true); // Auto-captured by SDK
     });
 
-    it('should add bucket and key to error tags using Sentry.setTag() for S3 operations in catch block', () => {
-      const mockSetTag = vi.mocked(Sentry.setTag);
+    it('should add bucket and key to error tags using AWSLambda.setTag() for S3 operations in catch block', () => {
+      const mockSetTag = vi.mocked(AWSLambda.setTag);
 
       // setTag is called for s3_bucket and s3_key
       expect(mockSetTag).toBeDefined();
@@ -171,7 +175,7 @@ describe('Sentry Integration', () => {
   describe('Performance', () => {
     it('should automatically flush Sentry events before Lambda handler completes (@sentry/serverless auto-flush)', () => {
       // wrapHandler provides automatic flushing behavior
-      // This is guaranteed by using Sentry.wrapHandler() which was already tested
+      // This is guaranteed by using AWSLambda.wrapHandler() which was already tested
       // in the "auto-wrap handler" test above
       expect(handler).toBeDefined();
     });
@@ -183,7 +187,7 @@ describe('Sentry Integration', () => {
     });
 
     it('should configure Sentry flush timeout to 2000ms (2 seconds)', () => {
-      const mockInit = vi.mocked(Sentry.init);
+      const mockInit = vi.mocked(AWSLambda.init);
       const initCall = mockInit.mock.calls[0];
 
       if (process.env.SENTRY_DSN && initCall) {

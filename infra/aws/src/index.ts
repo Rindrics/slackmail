@@ -4,8 +4,8 @@ import {
   MailparserEmailParser,
   ReceiveMailUseCase,
 } from '@rindrics/slackmail';
+import { AWSLambda } from '@sentry/serverless';
 import type { S3Event, S3Handler } from 'aws-lambda';
-import * as Sentry from '@sentry/serverless';
 import { S3StorageRepository } from '@/infrastructure/s3StorageRepository';
 
 /**
@@ -66,11 +66,10 @@ const { app } = createSlackApp({
 const sentryDsn = process.env.SENTRY_DSN?.trim();
 if (sentryDsn) {
   try {
-    Sentry.init({
+    AWSLambda.init({
       dsn: sentryDsn,
       environment: 'production',
       tracesSampleRate: 0, // Disable performance tracing
-      flushTimeout: 2000, // 2 second flush timeout
     });
     console.info('[Sentry] Initialized successfully');
   } catch (error) {
@@ -187,13 +186,13 @@ const rawHandler: S3Handler = async (event: S3Event) => {
 
       // Capture error to Sentry with context enrichment (if initialized and whitelisted)
       if (sentryDsn && shouldCaptureError(err)) {
-        Sentry.setTag('s3_bucket', bucket);
-        Sentry.setTag('s3_key', key);
-        Sentry.addBreadcrumb({
+        AWSLambda.setTag('s3_bucket', bucket);
+        AWSLambda.setTag('s3_key', key);
+        AWSLambda.addBreadcrumb({
           message: `Processing email from s3://${bucket}/${key}`,
           level: 'info',
         });
-        Sentry.captureException(err);
+        AWSLambda.captureException(err);
       }
 
       failedRecords.push({ bucket, key, error: err });
@@ -208,12 +207,12 @@ const rawHandler: S3Handler = async (event: S3Event) => {
 
     // Capture BatchProcessingError to Sentry with failed records context
     if (sentryDsn) {
-      Sentry.setContext('failed_records', {
+      AWSLambda.setContext('failed_records', {
         count: failedRecords.length,
         total: totalRecords,
         keys: failedRecords.map((r) => r.key),
       });
-      Sentry.captureException(batchError);
+      AWSLambda.captureException(batchError);
     }
 
     throw batchError;
@@ -227,4 +226,6 @@ const rawHandler: S3Handler = async (event: S3Event) => {
 /**
  * Export handler wrapped with Sentry for automatic error capturing and flushing
  */
-export const handler = Sentry.wrapHandler(rawHandler);
+export const handler = AWSLambda.wrapHandler(rawHandler, {
+  flushTimeout: 2000, // 2 second flush timeout
+});
