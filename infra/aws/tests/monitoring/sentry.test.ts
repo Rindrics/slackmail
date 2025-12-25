@@ -1,5 +1,9 @@
-import type { S3Handler } from 'aws-lambda';
+import { S3Client } from '@aws-sdk/client-s3';
+import type { Callback, Context, S3Event, S3Handler } from 'aws-lambda';
+import { mockClient } from 'aws-sdk-client-mock';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+
+const s3Mock = mockClient(S3Client);
 
 // Mock Sentry module before any imports
 vi.mock('@sentry/serverless', () => ({
@@ -28,6 +32,10 @@ describe('Sentry Integration', () => {
     }
     if (!process.env.SLACK_CHANNEL_ID) {
       process.env.SLACK_CHANNEL_ID = 'C123456789';
+    }
+    // Set SENTRY_DSN for error capture tests
+    if (!process.env.SENTRY_DSN) {
+      process.env.SENTRY_DSN = 'https://test@sentry.io/123';
     }
 
     // Import modules after mocks and env vars are set up
@@ -92,16 +100,69 @@ describe('Sentry Integration', () => {
   describe('Error Capture', () => {
     beforeEach(() => {
       vi.clearAllMocks();
+      s3Mock.reset();
     });
 
-    it('should capture BatchProcessingError with failed records context (bucket, key, error message) in catch block', () => {
+    it('should capture BatchProcessingError with failed records context (bucket, key, error message) in catch block', async () => {
       const mockCaptureException = vi.mocked(AWSLambda.captureException);
       const mockSetContext = vi.mocked(AWSLambda.setContext);
 
-      // Verify setContext is called for failed records
-      // This is integration-tested through handler execution
-      expect(mockSetContext).toBeDefined();
-      expect(mockCaptureException).toBeDefined();
+      // Mock S3 to throw an error (simulating S3 access failure)
+      s3Mock.rejects(new Error('S3 access denied'));
+
+      // Create a test S3 event
+      const testEvent: S3Event = {
+        Records: [
+          {
+            s3: {
+              bucket: {
+                name: 'test-bucket',
+                ownerIdentity: { principalId: '' },
+                arn: '',
+              },
+              object: {
+                key: 'test-key.eml',
+                size: 1024,
+                eTag: '',
+                sequencer: '',
+              },
+              configurationId: '',
+              s3SchemaVersion: '1.0',
+            },
+            eventVersion: '2.1',
+            eventSource: 'aws:s3',
+            awsRegion: 'us-east-1',
+            eventTime: '',
+            eventName: 's3:ObjectCreated:Put',
+            userIdentity: { principalId: '' },
+            requestParameters: { sourceIPAddress: '' },
+            responseElements: {
+              'x-amz-request-id': '',
+              'x-amz-id-2': '',
+            },
+          },
+        ],
+      };
+
+      // Invoke handler and expect it to throw BatchProcessingError
+      const mockContext = {} as Context;
+      const mockCallback = (() => {}) as Callback;
+      await expect(
+        handler(testEvent, mockContext, mockCallback),
+      ).rejects.toThrow(/Failed to process .* records/);
+
+      // Verify Sentry captureException was called
+      expect(mockCaptureException).toHaveBeenCalled();
+
+      // Verify Sentry setContext was called with failed records context
+      expect(mockSetContext).toHaveBeenCalledWith(
+        'failed_records',
+        expect.objectContaining({
+          count: expect.any(Number),
+          total: expect.any(Number),
+          keys: expect.arrayContaining([expect.any(String)]),
+        }),
+      );
     });
 
     it('should capture SlackPostError with Slack error code as tag when error is not auth-related (whitelist)', () => {
