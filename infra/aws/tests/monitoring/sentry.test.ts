@@ -2,52 +2,52 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('Sentry Integration', () => {
   describe('Initialization', () => {
-    it.todo('should initialize Sentry with DSN from environment variable');
+    it.todo('should initialize @sentry/serverless with DSN from SENTRY_DSN environment variable at module level');
 
-    it.todo('should set environment tag to production');
+    it.todo('should set environment tag to "production" when initializing Sentry');
 
-    it.todo('should configure default integrations for AWS Lambda');
+    it.todo('should use @sentry/serverless default AWS Lambda integrations (auto-wrap handler)');
 
-    it.todo('should skip initialization when SENTRY_DSN is not set');
+    it.todo('should skip Sentry initialization and log info message when SENTRY_DSN is not set (optional mode)');
 
-    it.todo('should throw error when SENTRY_DSN is invalid format');
+    it.todo('should log warning and continue when SENTRY_DSN has invalid format (fail-safe)');
   });
 
   describe('Error Capture', () => {
-    it.todo('should capture BatchProcessingError with failed records context');
+    it.todo('should capture BatchProcessingError with failed records context (bucket, key, error message) in catch block');
 
-    it.todo('should capture SlackPostError with Slack error code');
+    it.todo('should capture SlackPostError with Slack error code as tag when error is not auth-related (whitelist)');
 
-    it.todo('should capture S3 fetch errors with bucket and key context');
+    it.todo('should capture S3 fetch errors with bucket and key as tags in catch block');
 
-    it.todo('should capture email parsing errors with storage key context');
+    it.todo('should capture email parsing errors with storage key as context in catch block');
 
-    it.todo('should not capture errors when Sentry is not initialized');
+    it.todo('should not capture errors when Sentry initialization was skipped (SENTRY_DSN not set)');
   });
 
   describe('Context Enrichment', () => {
-    it.todo('should add S3 event metadata as breadcrumbs');
+    it.todo('should add S3 event metadata (bucket, key) as breadcrumbs using Sentry.addBreadcrumb() in catch block');
 
-    it.todo('should add email metadata (messageId, from, subject) to error context');
+    it.todo('should add email metadata (messageId, from, subject) to error context using Sentry.setContext() before captureException()');
 
-    it.todo('should add Lambda request ID to error tags');
+    it.todo('should add Lambda request ID to error tags using Sentry.setTag() (auto-captured by @sentry/serverless)');
 
-    it.todo('should add bucket and key to error tags for S3 operations');
+    it.todo('should add bucket and key to error tags using Sentry.setTag() for S3 operations in catch block');
   });
 
   describe('Error Filtering', () => {
-    it.todo('should not send expected validation errors to Sentry');
+    it.todo('should NOT capture validation errors (empty storageKey) - whitelist approach excludes expected errors');
 
-    it.todo('should send unexpected runtime errors to Sentry');
+    it.todo('should capture S3 errors, parsing errors, non-auth SlackPostError, and BatchProcessingError - whitelist of unexpected errors');
 
-    it.todo('should apply sample rate for high-volume errors');
+    it.todo('should NOT capture auth-related SlackPostError (invalid_auth) - excluded from whitelist');
   });
 
   describe('Performance', () => {
-    it.todo('should flush events before Lambda handler completes');
+    it.todo('should automatically flush Sentry events before Lambda handler completes (@sentry/serverless auto-flush)');
 
-    it.todo('should not block handler execution on Sentry flush timeout');
+    it.todo('should not block handler execution beyond flush timeout');
 
-    it.todo('should timeout Sentry flush after 2 seconds');
+    it.todo('should configure Sentry flush timeout to 2000ms (2 seconds)');
   });
 });
