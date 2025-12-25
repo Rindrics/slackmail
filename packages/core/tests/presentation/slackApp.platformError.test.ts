@@ -1,4 +1,7 @@
-import { describe, expect, it, test } from 'vitest';
+import type { App } from '@slack/bolt';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import type { Email } from '@/domain/entities';
+import { postEmailToSlack, SlackPostError } from '@/presentation/slackApp';
 
 /**
  * Test suite for handling Slack platform errors (slack_webapi_platform_error)
@@ -11,64 +14,398 @@ import { describe, expect, it, test } from 'vitest';
  * - Q2: Fall back to 'unknown_platform_error' if error.data.error is undefined
  * - Q3: Capture all platform errors to Sentry (no filtering changes needed)
  */
+
 describe('Slack Platform Error Handling', () => {
+  let mockApp: App;
+  let testEmail: Email;
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    // Create mock Slack app
+    mockApp = {
+      client: {
+        chat: {
+          postMessage: vi.fn(),
+        },
+      },
+    } as unknown as App;
+
+    // Create test email
+    testEmail = {
+      messageId: 'test-123@example.com',
+      from: { address: 'sender@example.com', name: 'Sender' },
+      to: [{ address: 'recipient@example.com', name: 'Recipient' }],
+      subject: 'Test Subject',
+      body: {
+        text: 'Test body',
+        html: '<p>Test body</p>',
+      },
+      date: new Date('2025-01-01T00:00:00Z'),
+    };
+
+    // Spy on console.error
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
   describe('Error extraction from slack_webapi_platform_error', () => {
-    test.todo(
-      'should extract actual error code from error.data.error when slack_webapi_platform_error occurs',
-    );
+    test('should extract actual error code from error.data.error when slack_webapi_platform_error occurs', async () => {
+      // Mock Slack API to throw platform error with nested error
+      const platformError = new Error(
+        'An API error occurred: fatal_error',
+      ) as Error & {
+        code: string;
+        data: { error: string; message: string };
+      };
+      platformError.code = 'slack_webapi_platform_error';
+      platformError.data = {
+        error: 'fatal_error',
+        message: 'Slack is temporarily unavailable',
+      };
 
-    test.todo(
-      'should extract actual error message from error.data.message when slack_webapi_platform_error occurs',
-    );
+      vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(
+        platformError,
+      );
 
-    test.todo(
-      'should fall back to "unknown_platform_error" when error.data.error is undefined',
-    );
+      // Should throw SlackPostError with actual error code
+      await expect(
+        postEmailToSlack(mockApp, 'C12345', testEmail),
+      ).rejects.toThrow(SlackPostError);
 
-    test.todo(
-      'should log full error object including error.data for debugging when error.data.error is unknown',
-    );
+      try {
+        await postEmailToSlack(mockApp, 'C12345', testEmail);
+      } catch (error) {
+        expect(error).toBeInstanceOf(SlackPostError);
+        expect((error as SlackPostError).code).toBe('fatal_error');
+      }
+    });
+
+    test('should extract actual error message from error.data.message when slack_webapi_platform_error occurs', async () => {
+      // Mock Slack API to throw platform error with nested message
+      const platformError = new Error(
+        'An API error occurred: not_authed',
+      ) as Error & {
+        code: string;
+        data: { error: string; message: string };
+      };
+      platformError.code = 'slack_webapi_platform_error';
+      platformError.data = {
+        error: 'not_authed',
+        message: 'No authentication token provided.',
+      };
+
+      vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(
+        platformError,
+      );
+
+      await expect(
+        postEmailToSlack(mockApp, 'C12345', testEmail),
+      ).rejects.toThrow(/Original message: No authentication token provided\./);
+    });
+
+    test('should fall back to "unknown_platform_error" when error.data.error is undefined', async () => {
+      // Mock Slack API to throw platform error without error.data
+      const platformError = new Error('An API error occurred') as Error & {
+        code: string;
+      };
+      platformError.code = 'slack_webapi_platform_error';
+
+      vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(
+        platformError,
+      );
+
+      try {
+        await postEmailToSlack(mockApp, 'C12345', testEmail);
+      } catch (error) {
+        expect(error).toBeInstanceOf(SlackPostError);
+        expect((error as SlackPostError).code).toBe('unknown_platform_error');
+      }
+    });
+
+    test('should log full error object including error.data for debugging when error.data.error is unknown', async () => {
+      // Mock Slack API to throw platform error
+      const platformError = new Error(
+        'An API error occurred: users_not_found',
+      ) as Error & {
+        code: string;
+        data: { error: string; message: string };
+      };
+      platformError.code = 'slack_webapi_platform_error';
+      platformError.data = {
+        error: 'users_not_found',
+        message: 'Users not found',
+      };
+
+      vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(
+        platformError,
+      );
+
+      try {
+        await postEmailToSlack(mockApp, 'C12345', testEmail);
+      } catch {
+        // Error thrown, now check logging
+      }
+
+      // Should log both the message and the full error object
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Slack platform error: users_not_found'),
+        platformError,
+      );
+    });
   });
 
   describe('Specific platform error handling', () => {
-    test.todo(
-      'should handle fatal_error from Slack platform with message "Slack platform error: fatal_error"',
-    );
+    test('should handle fatal_error from Slack platform with message "Slack platform error: fatal_error"', async () => {
+      const platformError = new Error(
+        'An API error occurred: fatal_error',
+      ) as Error & {
+        code: string;
+        data: { error: string; message: string };
+      };
+      platformError.code = 'slack_webapi_platform_error';
+      platformError.data = {
+        error: 'fatal_error',
+        message: 'Fatal error occurred',
+      };
 
-    test.todo(
-      'should handle not_authed error from Slack platform and include authentication guidance in message',
-    );
+      vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(
+        platformError,
+      );
 
-    test.todo(
-      'should handle account_inactive error from Slack platform with clear actionable message',
-    );
+      try {
+        await postEmailToSlack(mockApp, 'C12345', testEmail);
+      } catch {
+        // Error thrown, check logging
+      }
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Slack platform error: fatal_error - Fatal error occurred',
+        platformError,
+      );
+    });
+
+    test('should handle not_authed error from Slack platform and include authentication guidance in message', async () => {
+      const platformError = new Error(
+        'An API error occurred: not_authed',
+      ) as Error & {
+        code: string;
+        data: { error: string; message: string };
+      };
+      platformError.code = 'slack_webapi_platform_error';
+      platformError.data = {
+        error: 'not_authed',
+        message: 'No authentication token provided.',
+      };
+
+      vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(
+        platformError,
+      );
+
+      await expect(
+        postEmailToSlack(mockApp, 'C12345', testEmail),
+      ).rejects.toThrow(/actual: not_authed/);
+    });
+
+    test('should handle account_inactive error from Slack platform with clear actionable message', async () => {
+      const platformError = new Error(
+        'An API error occurred: account_inactive',
+      ) as Error & {
+        code: string;
+        data: { error: string; message: string };
+      };
+      platformError.code = 'slack_webapi_platform_error';
+      platformError.data = {
+        error: 'account_inactive',
+        message: 'Account is inactive',
+      };
+
+      vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(
+        platformError,
+      );
+
+      try {
+        await postEmailToSlack(mockApp, 'C12345', testEmail);
+      } catch (error) {
+        expect((error as SlackPostError).message).toContain('account_inactive');
+        expect((error as SlackPostError).code).toBe('account_inactive');
+      }
+    });
   });
 
   describe('Error message formatting', () => {
-    test.todo(
-      'should throw SlackPostError with format "Slack API error: slack_webapi_platform_error (actual: fatal_error)"',
-    );
+    test('should throw SlackPostError with format "Slack API error: slack_webapi_platform_error (actual: fatal_error)"', async () => {
+      const platformError = new Error(
+        'An API error occurred: fatal_error',
+      ) as Error & {
+        code: string;
+        data: { error: string; message: string };
+      };
+      platformError.code = 'slack_webapi_platform_error';
+      platformError.data = {
+        error: 'fatal_error',
+        message: 'Fatal error',
+      };
 
-    test.todo(
-      'should preserve original error.data in thrown SlackPostError for Sentry reporting',
-    );
+      vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(
+        platformError,
+      );
 
-    test.todo(
-      'should log both wrapper error code and actual error code to console.error',
-    );
+      await expect(
+        postEmailToSlack(mockApp, 'C12345', testEmail),
+      ).rejects.toThrow(
+        'Slack API error: slack_webapi_platform_error (actual: fatal_error)',
+      );
+    });
+
+    test('should preserve original error.data in thrown SlackPostError for Sentry reporting', async () => {
+      const platformError = new Error(
+        'An API error occurred: fatal_error',
+      ) as Error & {
+        code: string;
+        data: { error: string; message: string };
+      };
+      platformError.code = 'slack_webapi_platform_error';
+      platformError.data = {
+        error: 'fatal_error',
+        message: 'Fatal error occurred',
+      };
+
+      vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(
+        platformError,
+      );
+
+      try {
+        await postEmailToSlack(mockApp, 'C12345', testEmail);
+      } catch (error) {
+        // The error should be SlackPostError with the actual error code
+        expect(error).toBeInstanceOf(SlackPostError);
+        expect((error as SlackPostError).code).toBe('fatal_error');
+        expect((error as SlackPostError).message).toContain(
+          'Fatal error occurred',
+        );
+      }
+    });
+
+    test('should log both wrapper error code and actual error code to console.error', async () => {
+      const platformError = new Error(
+        'An API error occurred: not_authed',
+      ) as Error & {
+        code: string;
+        data: { error: string; message: string };
+      };
+      platformError.code = 'slack_webapi_platform_error';
+      platformError.data = {
+        error: 'not_authed',
+        message: 'No authentication',
+      };
+
+      vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(
+        platformError,
+      );
+
+      try {
+        await postEmailToSlack(mockApp, 'C12345', testEmail);
+      } catch {
+        // Error thrown
+      }
+
+      // Should log the actual error code
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Slack platform error: not_authed - No authentication',
+        platformError,
+      );
+    });
   });
 
   describe('Forwarded email scenario (no retry)', () => {
-    test.todo(
-      'should successfully process forwarded email when Slack API is healthy',
-    );
+    test('should successfully process forwarded email when Slack API is healthy', async () => {
+      // Mock successful API response
+      vi.mocked(mockApp.client.chat.postMessage).mockResolvedValue({
+        ok: true,
+        ts: '1234567890.123456',
+        channel: 'C12345',
+        message: {},
+      });
 
-    test.todo(
-      'should fail immediately without retry when platform error occurs (fail fast)',
-    );
+      const result = await postEmailToSlack(mockApp, 'C12345', testEmail);
 
-    test.todo(
-      'should provide actionable error message indicating whether issue is auth, Slack outage, or unknown',
-    );
+      expect(result).toBe('1234567890.123456');
+      expect(mockApp.client.chat.postMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channel: 'C12345',
+        }),
+      );
+    });
+
+    test('should fail immediately without retry when platform error occurs (fail fast)', async () => {
+      const platformError = new Error(
+        'An API error occurred: fatal_error',
+      ) as Error & {
+        code: string;
+        data: { error: string; message: string };
+      };
+      platformError.code = 'slack_webapi_platform_error';
+      platformError.data = {
+        error: 'fatal_error',
+        message: 'Fatal error',
+      };
+
+      vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(
+        platformError,
+      );
+
+      // Should throw immediately without retrying
+      await expect(
+        postEmailToSlack(mockApp, 'C12345', testEmail),
+      ).rejects.toThrow(SlackPostError);
+
+      // Should only call once (no retry)
+      expect(mockApp.client.chat.postMessage).toHaveBeenCalledTimes(1);
+    });
+
+    test('should provide actionable error message indicating whether issue is auth, Slack outage, or unknown', async () => {
+      // Test not_authed (auth issue)
+      const authError = new Error(
+        'An API error occurred: not_authed',
+      ) as Error & {
+        code: string;
+        data: { error: string; message: string };
+      };
+      authError.code = 'slack_webapi_platform_error';
+      authError.data = {
+        error: 'not_authed',
+        message: 'No authentication token provided.',
+      };
+
+      vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(authError);
+
+      try {
+        await postEmailToSlack(mockApp, 'C12345', testEmail);
+      } catch (error) {
+        expect((error as SlackPostError).message).toContain('not_authed');
+        expect((error as SlackPostError).code).toBe('not_authed');
+      }
+
+      // Test fatal_error (Slack outage)
+      const outageError = new Error(
+        'An API error occurred: fatal_error',
+      ) as Error & {
+        code: string;
+        data: { error: string; message: string };
+      };
+      outageError.code = 'slack_webapi_platform_error';
+      outageError.data = {
+        error: 'fatal_error',
+        message: 'Slack is temporarily unavailable',
+      };
+
+      vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(outageError);
+
+      try {
+        await postEmailToSlack(mockApp, 'C12345', testEmail);
+      } catch (error) {
+        expect((error as SlackPostError).message).toContain('fatal_error');
+        expect((error as SlackPostError).code).toBe('fatal_error');
+      }
+    });
   });
 });

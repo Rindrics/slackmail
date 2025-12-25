@@ -93,8 +93,26 @@ export async function postEmailToSlack(
     }
 
     // Handle Slack API errors thrown as exceptions
-    const slackError = error as { code?: string; message?: string };
+    const slackError = error as {
+      code?: string;
+      message?: string;
+      data?: { error?: string; message?: string };
+    };
     const errorCode = slackError.code || 'unknown_error';
+
+    // Extract actual error from error.data for slack_webapi_platform_error
+    if (errorCode === 'slack_webapi_platform_error') {
+      const actualError = slackError.data?.error || 'unknown_platform_error';
+      const actualMessage =
+        slackError.data?.message || slackError.message || 'Unknown error';
+      console.error(
+        `Slack platform error: ${actualError} - ${actualMessage}`,
+        error,
+      );
+      const enrichedMessage = `Slack API error: slack_webapi_platform_error (actual: ${actualError})\nOriginal message: ${actualMessage}`;
+      throw new SlackPostError(enrichedMessage, actualError);
+    }
+
     const message = getSlackErrorMessage(errorCode);
     console.error(`postEmailToSlack exception: ${message}`, error);
     throw new SlackPostError(message, errorCode);
