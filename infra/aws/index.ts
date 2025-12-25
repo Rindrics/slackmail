@@ -1,9 +1,9 @@
-import { stage } from './apigateway.js';
-import { emailDomain, projectName, stackName } from './config.js';
-import { boltLambda, lambdaRole } from './lambda.js';
-import { emailBucket } from './s3.js';
-import { sesDomainIdentity } from './ses.js';
-import './s3-notification.js'; // S3 event notification setup
+import { stage } from './apigateway';
+import { emailDomain, projectName, stackName } from './config';
+import { boltLambda, lambdaRole } from './lambda';
+import { emailBucket } from './s3';
+import { sesDomainIdentity } from './ses';
+import './s3-notification'; // S3 event notification setup
 
 // =============================================================================
 // Exports

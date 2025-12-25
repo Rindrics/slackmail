@@ -1,6 +1,6 @@
 import * as aws from '@pulumi/aws';
-import { projectName, stackName, tags } from './config.js';
-import { boltLambda } from './lambda.js';
+import { projectName, stackName, tags } from './config';
+import { boltLambda } from './lambda';
 
 // API Gateway for Slack webhook endpoint
 export const api = new aws.apigatewayv2.Api('slack-webhook-api', {
