@@ -5,6 +5,7 @@ import {
   ReceiveMailUseCase,
 } from '@rindrics/slackmail';
 import type { S3Event, S3Handler } from 'aws-lambda';
+import * as Sentry from '@sentry/serverless';
 import { S3StorageRepository } from '@/infrastructure/s3StorageRepository';
 
 /**
@@ -59,6 +60,60 @@ const { app } = createSlackApp({
 });
 
 /**
+ * Initialize Sentry for error tracking (optional, fail-safe)
+ * Module-level initialization runs once per Lambda container
+ */
+const sentryDsn = process.env.SENTRY_DSN?.trim();
+if (sentryDsn) {
+  try {
+    Sentry.init({
+      dsn: sentryDsn,
+      environment: 'production',
+      tracesSampleRate: 0, // Disable performance tracing
+      flushTimeout: 2000, // 2 second flush timeout
+    });
+    console.info('[Sentry] Initialized successfully');
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    console.warn('[Sentry] Initialization failed:', err.message);
+  }
+} else {
+  console.info('[Sentry] Skipping initialization (SENTRY_DSN not set)');
+}
+
+/**
+ * Helper function to determine if an error should be sent to Sentry
+ * Uses whitelist approach to capture only unexpected errors
+ */
+function shouldCaptureError(error: Error): boolean {
+  // Whitelist: Capture S3 errors, parsing errors, non-auth SlackPostError, BatchProcessingError
+  // Exclude: Validation errors, auth-related errors
+
+  // Check for validation errors (empty storageKey)
+  if (error.message.includes('storageKey cannot be empty')) {
+    return false;
+  }
+
+  // Check for auth-related Slack errors (these are expected configuration issues)
+  const authErrorCodes = [
+    'invalid_auth',
+    'invalid_channel',
+    'channel_not_found',
+    'not_in_channel',
+  ];
+
+  // SlackPostError has a 'code' property
+  if ('code' in error && typeof error.code === 'string') {
+    if (authErrorCodes.includes(error.code)) {
+      return false;
+    }
+  }
+
+  // Capture all other errors (S3 errors, parsing errors, other SlackPostError, BatchProcessingError)
+  return true;
+}
+
+/**
  * Record of a failed S3 record processing
  */
 interface FailedRecord {
@@ -97,7 +152,7 @@ export class BatchProcessingError extends Error {
  * to process remaining records. Throws BatchProcessingError if any
  * records fail, after all records have been attempted.
  */
-export const handler: S3Handler = async (event: S3Event) => {
+const rawHandler: S3Handler = async (event: S3Event) => {
   const failedRecords: FailedRecord[] = [];
   const totalRecords = event.Records.length;
 
@@ -129,6 +184,18 @@ export const handler: S3Handler = async (event: S3Event) => {
         error: err.message,
         stack: err.stack,
       });
+
+      // Capture error to Sentry with context enrichment (if initialized and whitelisted)
+      if (sentryDsn && shouldCaptureError(err)) {
+        Sentry.setTag('s3_bucket', bucket);
+        Sentry.setTag('s3_key', key);
+        Sentry.addBreadcrumb({
+          message: `Processing email from s3://${bucket}/${key}`,
+          level: 'info',
+        });
+        Sentry.captureException(err);
+      }
+
       failedRecords.push({ bucket, key, error: err });
     }
   }
@@ -137,10 +204,27 @@ export const handler: S3Handler = async (event: S3Event) => {
     console.error(
       `Batch processing completed with failures: ${failedRecords.length}/${totalRecords} records failed`,
     );
-    throw new BatchProcessingError(failedRecords, totalRecords);
+    const batchError = new BatchProcessingError(failedRecords, totalRecords);
+
+    // Capture BatchProcessingError to Sentry with failed records context
+    if (sentryDsn) {
+      Sentry.setContext('failed_records', {
+        count: failedRecords.length,
+        total: totalRecords,
+        keys: failedRecords.map((r) => r.key),
+      });
+      Sentry.captureException(batchError);
+    }
+
+    throw batchError;
   }
 
   console.log(
     `Batch processing completed successfully: ${totalRecords} records`,
   );
 };
+
+/**
+ * Export handler wrapped with Sentry for automatic error capturing and flushing
+ */
+export const handler = Sentry.wrapHandler(rawHandler);

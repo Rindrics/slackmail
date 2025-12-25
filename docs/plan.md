@@ -116,17 +116,66 @@ cd infra/aws && pnpm test tests/monitoring/sentry.test.ts
 
 ## Specification / 仕様
 
-<!-- When: architecture-decision | Do: POC知見を基にシステム仕様・アーキテクチャを具体化 -->
+### Sentry Integration Architecture
 
-### [仕様項目1]
+**Package**: `@sentry/serverless` in `infra/aws/package.json`
 
-[説明]
+**Initialization**: Module-level in `infra/aws/src/index.ts` (before handler export)
+```typescript
+// Module-level initialization (runs once per Lambda container)
+const sentryDsn = process.env.SENTRY_DSN?.trim();
+if (sentryDsn) {
+  try {
+    Sentry.init({
+      dsn: sentryDsn,
+      environment: 'production',
+      tracesSampleRate: 0,
+      flushTimeout: 2000,
+    });
+  } catch (error) {
+    console.warn('[Sentry] Initialization failed:', error);
+  }
+} else {
+  console.info('[Sentry] Skipping initialization (SENTRY_DSN not set)');
+}
+
+// Wrap handler with Sentry (if initialized)
+export const handler = Sentry.wrapHandler(rawHandler);
+```
+
+### Error Capture Whitelist
+
+**Capture these errors**:
+- S3 fetch errors (GetObjectCommand failures)
+- Email parsing errors (mailparser failures)
+- SlackPostError (non-auth: rate_limited, msg_too_long, etc.)
+- BatchProcessingError (partial batch failures)
+
+**Do NOT capture**:
+- Validation errors (empty storageKey)
+- Auth-related SlackPostError (invalid_auth, invalid_channel, not_in_channel)
+
+### Context Enrichment Pattern
+
+**In catch blocks** (lines 126-132 in handler):
+```typescript
+Sentry.setTag('s3_bucket', bucket);
+Sentry.setTag('s3_key', key);
+Sentry.setContext('email', { messageId, from, subject });
+Sentry.addBreadcrumb({ message: `Processing ${bucket}/${key}` });
+Sentry.captureException(error);
+```
+
+**Auto-captured by @sentry/serverless**:
+- Lambda request ID
+- Function name
+- AWS region
 
 ---
 
 ## Open Questions / 残論点
 
-**Q1: Which Sentry SDK package should we use for AWS Lambda?**
+**~Q1: Which Sentry SDK package should we use for AWS Lambda?~** ✅ 解決済み (2025-12-26)
 
 Testing Error Capture scenarios requires knowing the SDK's API for capturing errors with context.
 
@@ -142,7 +191,10 @@ Testing Error Capture scenarios requires knowing the SDK's API for capturing err
   - More manual setup required (manual flush, context enrichment)
   - Trade-offs: No Lambda-specific optimizations
 
-**Q2: Should Sentry initialization be mandatory or optional in production?**
+**決定**: @sentry/serverless
+**理由**: Lambda-specific optimizations (auto-wrap, context enrichment, auto-flush) reduce implementation complexity and follow AWS Lambda best practices
+
+**~Q2: Should Sentry initialization be mandatory or optional in production?~** ✅ 解決済み (2025-12-26)
 
 Affects test: "Should throw error when SENTRY_DSN is invalid format" vs "Should skip initialization when SENTRY_DSN is not set"
 
@@ -157,7 +209,10 @@ Affects test: "Should throw error when SENTRY_DSN is invalid format" vs "Should 
   - Ensures monitoring is always active
   - Trade-offs: Requires DSN before deployment
 
-**Q3: Where should Sentry initialization occur in the Lambda handler?**
+**決定**: Optional
+**理由**: Gradual rollout support and fail-safe design align with existing error handling philosophy (don't break email processing)
+
+**~Q3: Where should Sentry initialization occur in the Lambda handler?~** ✅ 解決済み (2025-12-26)
 
 Determines whether initialization errors can be tested and how to structure tests.
 
@@ -172,7 +227,10 @@ Determines whether initialization errors can be tested and how to structure test
   - Easier to test with dependency injection
   - Trade-offs: Runs on every invocation (performance overhead)
 
-**Q4: How should we enrich error context for different error types?**
+**決定**: Module-level initialization
+**理由**: Matches existing codebase pattern and optimizes for performance (one-time initialization per container)
+
+**~Q4: How should we enrich error context for different error types?~** ✅ 解決済み (2025-12-26)
 
 Testing Context Enrichment requires defining what context is available for each error type.
 
@@ -189,7 +247,10 @@ Testing Context Enrichment requires defining what context is available for each 
 - **[Global context at handler start]**: Set context once at handler start
   - Trade-offs: Can't capture email-specific metadata (messageId, from, subject)
 
-**Q5: What error filtering rules should we apply?**
+**決定**: Error-specific context in catch blocks
+**理由**: Provides maximum debugging context and follows existing Lambda handler pattern where error data is readily available
+
+**~Q5: What error filtering rules should we apply?~** ✅ 解決済み (2025-12-26)
 
 Testing Error Filtering requires knowing which errors are expected vs unexpected.
 
@@ -206,7 +267,10 @@ Testing Error Filtering requires knowing which errors are expected vs unexpected
 - **[No filtering]**: Send all errors
   - Trade-offs: High noise, increased Sentry costs
 
-**Q6: What flush timeout should we use for Sentry?**
+**決定**: Whitelist unexpected errors
+**理由**: Controlled Sentry costs and signal-to-noise ratio, acceptable trade-off given we can iterate on whitelist based on production needs
+
+**~Q6: What flush timeout should we use for Sentry?~** ✅ 解決済み (2025-12-26)
 
 Testing Performance requires knowing the timeout value.
 
@@ -222,7 +286,10 @@ Testing Performance requires knowing the timeout value.
 - **[Use @sentry/serverless default]**: SDK handles flush automatically
   - Trade-offs: Unknown timeout value (requires documentation check)
 
-**Q7: Should we add Sentry to packages/core or only infra/aws?**
+**決定**: 2 seconds
+**理由**: Balances reliability (enough time for flush) with Lambda performance (minimal blocking)
+
+**~Q7: Should we add Sentry to packages/core or only infra/aws?~** ✅ 解決済み (2025-12-26)
 
 Affects where error capturing code lives and test structure.
 
@@ -235,7 +302,10 @@ Affects where error capturing code lives and test structure.
   - Could capture errors closer to source (e.g., in SlackApp.postMessage)
   - Trade-offs: Violates clean architecture (core depends on monitoring tool)
 
-**Q8: How should we handle Sentry initialization failures?**
+**決定**: infra/aws only
+**理由**: Preserves clean architecture principle (core remains infrastructure-agnostic), handler layer already has all error context needed
+
+**~Q8: How should we handle Sentry initialization failures?~** ✅ 解決済み (2025-12-26)
 
 Testing "Should throw error when SENTRY_DSN is invalid format" requires knowing the behavior.
 
@@ -248,27 +318,52 @@ Testing "Should throw error when SENTRY_DSN is invalid format" requires knowing 
   - Lambda container restarts, tries again
   - Trade-offs: Email processing stops if Sentry has issues
 
+**決定**: Log warning and continue
+**理由**: Fail-safe design matches existing philosophy (don't break primary function for monitoring), errors still visible in CloudWatch Logs
+
 ---
 
 ## Discoveries & Insights
 
-<!-- When: poc以降、継続的 | Do: 技術的制約・複雑性・失敗原因を記録 -->
+**2025-12-26: Lambda Handler Structure and Error Handling Patterns**
+- Handler file: `infra/aws/src/index.ts` - S3 event handler with batch processing
+- Uses module-level initialization pattern for Slack app (lines 51-59)
+- Batch processing collects failures but continues processing remaining records
+- Custom error classes: `BatchProcessingError` (handler), `SlackPostError` (core)
+- All errors logged with `console.error()` including message and stack trace
 
-**YYYY-MM-DD: [タイトル]**
-- [発見内容]
-- [学び]
+**2025-12-26: Testing Infrastructure**
+- Vitest 4.0.16 with `aws-sdk-client-mock` for AWS service mocking
+- Tests mirror src structure: `tests/{layer}/{domain}/*.test.ts`
+- Existing pattern: Dependency injection via constructor for testability
+- Mock pattern: `vi.fn()` with type-safe callbacks, `mockClient(S3Client)` for AWS
+
+**2025-12-26: Clean Architecture Adherence**
+- packages/core is infrastructure-agnostic (domain, application, infrastructure, presentation layers)
+- infra/aws depends on @rindrics/slackmail package
+- Adding Sentry to infra/aws preserves this separation
 
 ---
 
 ## Decision Log
 
-<!-- When: architecture-decision | Do: 技術選定、アーキテクチャ決定、トレードオフを記録 -->
+**2025-12-26: Sentry SDK Selection and Integration Architecture**
+- **採用**: @sentry/serverless with module-level initialization in infra/aws only
+- **理由**: Lambda-specific optimizations (auto-wrap, context enrichment, auto-flush), matches existing codebase pattern, preserves clean architecture
+- **比較候補**: @sentry/node (more manual setup), handler-level init (performance overhead), packages/core integration (violates clean architecture)
+- **トレードオフ**: Slightly higher bundle size (~200KB gzipped), harder to test with module-level mocking
 
-**YYYY-MM-DD: [決定事項]**
-- **採用**: [技術・手法]
-- **理由**: [簡潔に]
-- **比較候補**: [他の選択肢]
-- **トレードオフ**: [制約・課題]
+**2025-12-26: Error Handling and Filtering Strategy**
+- **採用**: Optional initialization (fail-safe), whitelist unexpected errors, error-specific context in catch blocks
+- **理由**: Gradual rollout support, controlled costs/noise, maximum debugging context
+- **比較候補**: Mandatory init (requires DSN before deploy), blacklist/no filtering (high noise), global context (limited metadata)
+- **トレードオフ**: May miss new error types until whitelist updated, silent monitoring failure if DSN misconfigured
+
+**2025-12-26: Performance Configuration**
+- **採用**: 2-second flush timeout with @sentry/serverless auto-flush
+- **理由**: Balances reliability with minimal Lambda blocking time
+- **比較候補**: 5s timeout (longer blocking), SDK default (unknown value)
+- **トレードオフ**: May not flush all events on very slow networks
 
 ---
 
@@ -293,28 +388,13 @@ Testing "Should throw error when SENTRY_DSN is invalid format" requires knowing 
 
 ## Confidence Assessment
 
-<!--
-When: 各Phase完了時に必須更新
-Do: プロジェクト全体の実装確信度を評価（前回を置き換え）
-
-- 自信度:高🟢 - 方針確定、リスク低
-- 自信度:中🟡 - 方針あり、一部不確実
-- 自信度:低🔴 - 重要決定が未解決
--->
-
-**自信度**: [自信度:高🟢 / 自信度:中🟡 / 自信度:低🔴] - [理由を1行で]
+**自信度**: 自信度:高🟢 - All architectural decisions finalized, implementation approach clear, tests specify exact behavior
 
 ---
 
 ## Current Status
 
-<!--
-When: フェーズ開始/完了時に自動更新
-- Status: plan/poc/architecture-decision/implement/retrospective/done
-- Stage: To Start/In Progress/To Review
--->
-
-**Status**: [plan / poc / architecture-decision / implement / retrospective / done]
-**Stage**: [To Start / In Progress / To Review]
-**最終更新**: YYYY-MM-DD HH:MM:SS
-**ネクストアクション**: [人間が取るべき次のアクション]
+**Status**: implement
+**Stage**: To Start
+**最終更新**: 2025-12-26 01:50:00
+**ネクストアクション**: Begin implementation with /issync:implement
