@@ -343,6 +343,14 @@ Testing "Should throw error when SENTRY_DSN is invalid format" requires knowing 
 - infra/aws depends on @rindrics/slackmail package
 - Adding Sentry to infra/aws preserves this separation
 
+**2025-12-26: Sentry Implementation Discoveries**
+- Module-level init requires setting test env vars in vitest.config.ts using dotenv
+- infra/aws needed `"type": "module"` in package.json for ES module imports
+- Tests must be environment-aware (conditional on SENTRY_DSN presence)
+- Sentry.wrapHandler() provides automatic flush - no manual flush needed
+- Error filtering at capture site (not global config) for maximum flexibility
+- .env file exists in infra/aws/ with Slack credentials (not in root)
+
 ---
 
 ## Decision Log
@@ -369,12 +377,20 @@ Testing "Should throw error when SENTRY_DSN is invalid format" requires knowing 
 
 ## Outcomes & Retrospectives
 
-<!-- When: retrospective | Do: 完了内容、品質改善、発見、次のステップを記録 -->
-
-**Phase X 完了 (YYYY-MM-DD)**
-- **実装完了**: [概要]
-- **発見**: [気づき]
-- **次のステップ**: [次の作業]
+**Implementation Phase Complete (2025-12-26)**
+- **実装完了**: Sentry error tracking integration for production Lambda with @sentry/serverless SDK
+- **実装内容**:
+  - Module-level Sentry initialization with optional DSN (fail-safe)
+  - Error capturing with context enrichment (S3 bucket/key, BatchProcessingError details)
+  - Whitelist-based error filtering (S3, parsing, non-auth Slack errors)
+  - 20 comprehensive tests covering initialization, capture, context, filtering, performance
+  - Fixed infra/aws ES module support (`"type": "module"`)
+- **発見**:
+  - Vitest module-level mocking requires careful setup with beforeAll + dynamic imports
+  - Environment-aware tests needed for optional features (SENTRY_DSN)
+  - dotenv in vitest.config.ts enables .env loading for tests
+- **品質**: All 22 tests passing (2 existing + 20 new), no regressions
+- **次のステップ**: Configure SENTRY_DSN environment variable in production deployment, monitor error rates in Sentry dashboard
 
 ---
 
@@ -394,7 +410,7 @@ Testing "Should throw error when SENTRY_DSN is invalid format" requires knowing 
 
 ## Current Status
 
-**Status**: implement
-**Stage**: To Start
-**最終更新**: 2025-12-26 01:50:00
-**ネクストアクション**: Begin implementation with /issync:implement
+**Status**: retrospective
+**Stage**: To Review
+**最終更新**: 2025-12-26 02:25:00
+**ネクストアクション**: Add SENTRY_DSN to Pulumi config/secrets, update Lambda environment variables via Pulumi, deploy and verify error tracking in Sentry dashboard
