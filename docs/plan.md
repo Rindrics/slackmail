@@ -385,12 +385,14 @@ Testing "Should throw error when SENTRY_DSN is invalid format" requires knowing 
   - Whitelist-based error filtering (S3, parsing, non-auth Slack errors)
   - 20 comprehensive tests covering initialization, capture, context, filtering, performance
   - Fixed infra/aws ES module support (`"type": "module"`)
+  - Pulumi configuration for SENTRY_DSN (config.ts, lambda.ts, GitHub Actions workflow)
 - **発見**:
   - Vitest module-level mocking requires careful setup with beforeAll + dynamic imports
   - Environment-aware tests needed for optional features (SENTRY_DSN)
   - dotenv in vitest.config.ts enables .env loading for tests
+  - Pulumi config best practice: use environment variables for secrets (not Pulumi.<stack>.yaml)
 - **品質**: All 22 tests passing (2 existing + 20 new), no regressions
-- **次のステップ**: Configure SENTRY_DSN environment variable in production deployment, monitor error rates in Sentry dashboard
+- **次のステップ**: Set SENTRY_DSN in GitHub repository secrets, merge PR, deploy to production
 
 ---
 
