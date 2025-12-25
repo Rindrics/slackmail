@@ -1,8 +1,8 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 
-import { emailDomain, route53ZoneId } from './config';
-import { emailBucket } from './s3';
+import { emailDomain, route53ZoneId } from './config.js';
+import { emailBucket } from './s3.js';
 
 // Get current AWS region and account
 const currentRegion = aws.getRegion();

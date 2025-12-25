@@ -2,7 +2,8 @@ import type { S3Handler } from 'aws-lambda';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Set up required environment variables for module-level code
-process.env.SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET || 'test-signing-secret';
+process.env.SLACK_SIGNING_SECRET =
+  process.env.SLACK_SIGNING_SECRET || 'test-signing-secret';
 process.env.SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN || 'xoxb-test-token';
 process.env.SLACK_CHANNEL_ID = process.env.SLACK_CHANNEL_ID || 'C123456789';
 

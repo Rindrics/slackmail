@@ -1,6 +1,6 @@
 import * as aws from '@pulumi/aws';
-import { boltLambda } from './lambda';
-import { emailBucket } from './s3';
+import { boltLambda } from './lambda.js';
+import { emailBucket } from './s3.js';
 
 // Permission for S3 to invoke Lambda
 export const s3LambdaPermission = new aws.lambda.Permission(

@@ -7,8 +7,8 @@ import {
   slackSigningSecret,
   stackName,
   tags,
-} from './config';
-import { emailBucket } from './s3';
+} from './config.js';
+import { emailBucket } from './s3.js';
 
 // Get AWS region and account ID for constructing ARNs
 const currentRegion = aws.getRegion();

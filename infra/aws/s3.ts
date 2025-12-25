@@ -1,5 +1,5 @@
 import * as aws from '@pulumi/aws';
-import { projectName, stackName, tags } from './config';
+import { projectName, stackName, tags } from './config.js';
 
 // S3 Bucket for Email Storage
 export const emailBucket = new aws.s3.Bucket('email-bucket', {
