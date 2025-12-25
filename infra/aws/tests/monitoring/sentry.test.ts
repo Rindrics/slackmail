@@ -1,12 +1,6 @@
 import type { S3Handler } from 'aws-lambda';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Set up required environment variables for module-level code
-process.env.SLACK_SIGNING_SECRET =
-  process.env.SLACK_SIGNING_SECRET || 'test-signing-secret';
-process.env.SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN || 'xoxb-test-token';
-process.env.SLACK_CHANNEL_ID = process.env.SLACK_CHANNEL_ID || 'C123456789';
-
 // Mock Sentry module before any imports
 vi.mock('@sentry/serverless', () => ({
   AWSLambda: {
@@ -24,7 +18,19 @@ describe('Sentry Integration', () => {
   let handler: S3Handler;
 
   beforeAll(async () => {
-    // Import modules after mocks are set up
+    // Set up required environment variables before importing index module
+    // These are needed by loadEnvConfig() which runs at module level
+    if (!process.env.SLACK_SIGNING_SECRET) {
+      process.env.SLACK_SIGNING_SECRET = 'test-signing-secret';
+    }
+    if (!process.env.SLACK_BOT_TOKEN) {
+      process.env.SLACK_BOT_TOKEN = 'xoxb-test-token';
+    }
+    if (!process.env.SLACK_CHANNEL_ID) {
+      process.env.SLACK_CHANNEL_ID = 'C123456789';
+    }
+
+    // Import modules after mocks and env vars are set up
     const SentryModule = await import('@sentry/serverless');
     AWSLambda = SentryModule.AWSLambda;
     const indexModule = await import('../../src/index.js');
