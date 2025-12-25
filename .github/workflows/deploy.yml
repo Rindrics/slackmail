@@ -64,6 +64,7 @@ jobs:
           SLACK_SIGNING_SECRET: ${{ secrets.SLACK_SIGNING_SECRET }}
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_CHANNEL_ID: ${{ vars.SLACK_CHANNEL_ID }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
 
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -103,3 +104,4 @@ jobs:
           SLACK_SIGNING_SECRET: ${{ secrets.SLACK_SIGNING_SECRET }}
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_CHANNEL_ID: ${{ vars.SLACK_CHANNEL_ID }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}

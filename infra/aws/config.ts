@@ -25,6 +25,10 @@ export const slackSigningSecret = getConfig(
 export const slackBotToken = getConfig('slackBotToken', 'SLACK_BOT_TOKEN');
 export const slackChannelId = getConfig('slackChannelId', 'SLACK_CHANNEL_ID');
 
+// Sentry configuration (optional - for production error tracking)
+// Set via GitHub Actions secret, not committed to repository
+export const sentryDsn = process.env.SENTRY_DSN || '';
+
 export const tags = {
   Project: projectName,
   Environment: stackName,

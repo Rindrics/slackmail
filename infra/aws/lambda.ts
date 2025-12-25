@@ -1,6 +1,7 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 import {
+  sentryDsn,
   slackBotToken,
   slackChannelId,
   slackSigningSecret,
@@ -94,6 +95,7 @@ export const boltLambda = new aws.lambda.Function('bolt-lambda', {
       SLACK_SIGNING_SECRET: slackSigningSecret,
       SLACK_BOT_TOKEN: slackBotToken,
       SLACK_CHANNEL_ID: slackChannelId,
+      SENTRY_DSN: sentryDsn,
     },
   },
   tags,
