@@ -45,12 +45,26 @@ export class SlackPostError extends Error {
  */
 function getSlackErrorMessage(errorCode: string): string {
   const errorMessages: Record<string, string> = {
-    invalid_auth: 'Invalid Slack bot token. Please check SLACK_BOT_TOKEN.',
+    // Channel errors
     channel_not_found:
       'Slack channel not found. Please check SLACK_CHANNEL_ID.',
     not_in_channel:
       'Bot is not a member of the channel. Please invite the bot.',
     is_archived: 'The channel has been archived.',
+    // Authentication/authorization errors
+    invalid_auth: 'Invalid Slack bot token. Please check SLACK_BOT_TOKEN.',
+    not_authed: 'No authentication token provided. Please set SLACK_BOT_TOKEN.',
+    account_inactive:
+      'Slack workspace or user account is inactive. Please check workspace status.',
+    token_revoked:
+      'Slack bot token has been revoked. Please regenerate the token.',
+    token_expired:
+      'Slack bot token has expired. Please regenerate the token.',
+    no_permission:
+      'Bot lacks required permissions. Please check OAuth scopes.',
+    missing_scope:
+      'Bot is missing required OAuth scopes. Please add chat:write scope.',
+    // Other errors
     msg_too_long: 'Message is too long for Slack.',
     rate_limited: 'Rate limited by Slack API. Please retry later.',
   };
@@ -215,14 +229,22 @@ export function createEmailReceivedHandler(
           },
         );
 
-        // Don't retry on non-transient errors
+        // Don't retry on non-transient errors (configuration/auth issues)
         if (lastError instanceof SlackPostError) {
           const nonRetryableCodes = [
+            // Channel configuration errors
             'invalid_channel',
-            'invalid_auth',
             'channel_not_found',
             'not_in_channel',
             'is_archived',
+            // Authentication/authorization errors
+            'invalid_auth',
+            'not_authed',
+            'account_inactive',
+            'token_revoked',
+            'token_expired',
+            'no_permission',
+            'missing_scope',
           ];
           if (lastError.code && nonRetryableCodes.includes(lastError.code)) {
             break;
