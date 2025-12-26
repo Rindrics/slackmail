@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.1.5](https://github.com/Rindrics/slackmail/compare/v0.1.4...v0.1.5) - 2025-12-26
+- Setup Sentry for production by @Rindrics in https://github.com/Rindrics/slackmail/pull/64
+- Handle Slack error to know what occurs by @Rindrics in https://github.com/Rindrics/slackmail/pull/66
+
 ## [v0.1.4](https://github.com/Rindrics/slackmail/compare/v0.1.3...v0.1.4) - 2025-12-23
 - Use PAT for whole workflow by @Rindrics in https://github.com/Rindrics/slackmail/pull/60
 - Add GITHUB_TOKEN environment variable to tagpr action by @Rindrics in https://github.com/Rindrics/slackmail/pull/61
