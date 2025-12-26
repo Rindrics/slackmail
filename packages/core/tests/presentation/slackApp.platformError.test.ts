@@ -71,12 +71,11 @@ describe('Slack Platform Error Handling', () => {
         postEmailToSlack(mockApp, 'C12345', testEmail),
       ).rejects.toThrow(SlackPostError);
 
-      try {
-        await postEmailToSlack(mockApp, 'C12345', testEmail);
-      } catch (error) {
-        expect(error).toBeInstanceOf(SlackPostError);
-        expect((error as SlackPostError).code).toBe('fatal_error');
-      }
+      await expect(
+        postEmailToSlack(mockApp, 'C12345', testEmail),
+      ).rejects.toMatchObject({
+        code: 'fatal_error',
+      });
     });
 
     test('should extract actual error message from error.data.message when slack_webapi_platform_error occurs', async () => {
@@ -113,12 +112,16 @@ describe('Slack Platform Error Handling', () => {
         platformError,
       );
 
-      try {
-        await postEmailToSlack(mockApp, 'C12345', testEmail);
-      } catch (error) {
-        expect(error).toBeInstanceOf(SlackPostError);
-        expect((error as SlackPostError).code).toBe('unknown_platform_error');
-      }
+      const error = await expect(
+        postEmailToSlack(mockApp, 'C12345', testEmail),
+      ).rejects.toThrow(SlackPostError);
+
+      // Additional assertions on the thrown error
+      await expect(
+        postEmailToSlack(mockApp, 'C12345', testEmail),
+      ).rejects.toMatchObject({
+        code: 'unknown_platform_error',
+      });
     });
 
     test('should log full error object including error.data for debugging when error.data.error is unknown', async () => {
@@ -139,11 +142,10 @@ describe('Slack Platform Error Handling', () => {
         platformError,
       );
 
-      try {
-        await postEmailToSlack(mockApp, 'C12345', testEmail);
-      } catch {
-        // Error thrown, now check logging
-      }
+      // Ensure error is thrown
+      await expect(
+        postEmailToSlack(mockApp, 'C12345', testEmail),
+      ).rejects.toThrow(SlackPostError);
 
       // Should log both the message and the full error object
       expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -171,11 +173,10 @@ describe('Slack Platform Error Handling', () => {
         platformError,
       );
 
-      try {
-        await postEmailToSlack(mockApp, 'C12345', testEmail);
-      } catch {
-        // Error thrown, check logging
-      }
+      // Ensure error is thrown
+      await expect(
+        postEmailToSlack(mockApp, 'C12345', testEmail),
+      ).rejects.toThrow(SlackPostError);
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         'Slack platform error: fatal_error - Fatal error occurred',
@@ -222,12 +223,12 @@ describe('Slack Platform Error Handling', () => {
         platformError,
       );
 
-      try {
-        await postEmailToSlack(mockApp, 'C12345', testEmail);
-      } catch (error) {
-        expect((error as SlackPostError).message).toContain('account_inactive');
-        expect((error as SlackPostError).code).toBe('account_inactive');
-      }
+      await expect(
+        postEmailToSlack(mockApp, 'C12345', testEmail),
+      ).rejects.toMatchObject({
+        code: 'account_inactive',
+        message: expect.stringContaining('account_inactive'),
+      });
     });
   });
 
@@ -273,16 +274,17 @@ describe('Slack Platform Error Handling', () => {
         platformError,
       );
 
-      try {
-        await postEmailToSlack(mockApp, 'C12345', testEmail);
-      } catch (error) {
-        // The error should be SlackPostError with the actual error code
-        expect(error).toBeInstanceOf(SlackPostError);
-        expect((error as SlackPostError).code).toBe('fatal_error');
-        expect((error as SlackPostError).message).toContain(
-          'Fatal error occurred',
-        );
-      }
+      // The error should be SlackPostError with the actual error code
+      await expect(
+        postEmailToSlack(mockApp, 'C12345', testEmail),
+      ).rejects.toThrow(SlackPostError);
+
+      await expect(
+        postEmailToSlack(mockApp, 'C12345', testEmail),
+      ).rejects.toMatchObject({
+        code: 'fatal_error',
+        message: expect.stringContaining('Fatal error occurred'),
+      });
     });
 
     test('should log both wrapper error code and actual error code to console.error', async () => {
@@ -302,11 +304,10 @@ describe('Slack Platform Error Handling', () => {
         platformError,
       );
 
-      try {
-        await postEmailToSlack(mockApp, 'C12345', testEmail);
-      } catch {
-        // Error thrown
-      }
+      // Ensure error is thrown
+      await expect(
+        postEmailToSlack(mockApp, 'C12345', testEmail),
+      ).rejects.toThrow(SlackPostError);
 
       // Should log the actual error code
       expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -378,12 +379,12 @@ describe('Slack Platform Error Handling', () => {
 
       vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(authError);
 
-      try {
-        await postEmailToSlack(mockApp, 'C12345', testEmail);
-      } catch (error) {
-        expect((error as SlackPostError).message).toContain('not_authed');
-        expect((error as SlackPostError).code).toBe('not_authed');
-      }
+      await expect(
+        postEmailToSlack(mockApp, 'C12345', testEmail),
+      ).rejects.toMatchObject({
+        code: 'not_authed',
+        message: expect.stringContaining('not_authed'),
+      });
 
       // Test fatal_error (Slack outage)
       const outageError = new Error(
@@ -400,12 +401,12 @@ describe('Slack Platform Error Handling', () => {
 
       vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(outageError);
 
-      try {
-        await postEmailToSlack(mockApp, 'C12345', testEmail);
-      } catch (error) {
-        expect((error as SlackPostError).message).toContain('fatal_error');
-        expect((error as SlackPostError).code).toBe('fatal_error');
-      }
+      await expect(
+        postEmailToSlack(mockApp, 'C12345', testEmail),
+      ).rejects.toMatchObject({
+        code: 'fatal_error',
+        message: expect.stringContaining('fatal_error'),
+      });
     });
   });
 });
