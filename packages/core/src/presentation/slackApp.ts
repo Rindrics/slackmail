@@ -58,10 +58,8 @@ function getSlackErrorMessage(errorCode: string): string {
       'Slack workspace or user account is inactive. Please check workspace status.',
     token_revoked:
       'Slack bot token has been revoked. Please regenerate the token.',
-    token_expired:
-      'Slack bot token has expired. Please regenerate the token.',
-    no_permission:
-      'Bot lacks required permissions. Please check OAuth scopes.',
+    token_expired: 'Slack bot token has expired. Please regenerate the token.',
+    no_permission: 'Bot lacks required permissions. Please check OAuth scopes.',
     missing_scope:
       'Bot is missing required OAuth scopes. Please add chat:write scope.',
     // Other errors

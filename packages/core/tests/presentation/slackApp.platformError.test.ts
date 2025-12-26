@@ -112,11 +112,10 @@ describe('Slack Platform Error Handling', () => {
         platformError,
       );
 
-      const error = await expect(
+      await expect(
         postEmailToSlack(mockApp, 'C12345', testEmail),
       ).rejects.toThrow(SlackPostError);
 
-      // Additional assertions on the thrown error
       await expect(
         postEmailToSlack(mockApp, 'C12345', testEmail),
       ).rejects.toMatchObject({
