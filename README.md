@@ -39,6 +39,7 @@ Receive emails and forward them to a Slack channel.
 |-------|-------------|
 | `chat:write` | Post messages to channels |
 | `chat:write.public` | Post to public channels the bot isn't a member of |
+| `files:write` | Upload, edit, and delete files (required for long emails >2800 characters) |
 
 3. Install the app to your workspace under **Install App**
 4. Note down the following credentials:
@@ -217,6 +218,15 @@ New AWS accounts have SES in sandbox mode. For production use:
 2. Check that SES domain verification is complete
 3. Verify SES Receipt Rule is enabled
 4. Check Lambda CloudWatch Logs for errors
+
+### Long Emails
+
+Emails exceeding Slack Block Kit character limits are handled automatically:
+
+- **Email subject** > 140 characters: Truncated with "..." ellipsis
+- **Email body** > 2800 characters: Uploaded as a `.txt` file with preview
+
+> **Note**: If you see a `missing_scope` error for long emails, ensure the `files:write` scope is added to your Slack app (see Setup → Slack App Setup).
 
 ## License
 

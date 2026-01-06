@@ -1,7 +1,7 @@
 import type { App } from '@slack/bolt';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import type { Email } from '@/domain/entities';
-import { postEmailToSlack } from '@/presentation/slackApp';
+import { postEmailToSlack, SlackPostError } from '@/presentation/slackApp';
 
 /**
  * Test suite for handling long emails with file upload fallback
@@ -57,7 +57,7 @@ describe('Slack File Upload for Long Emails', () => {
   });
 
   describe('Long emails (exceeding character limits)', () => {
-    test('should upload body as file when exceeding 2800 characters', async () => {
+    test('should post message first, then upload body as file in thread', async () => {
       const longBody = 'Lorem ipsum dolor sit amet. '.repeat(150); // ~4200 characters
       const emailWithLongBody: Email = {
         ...testEmail,
@@ -66,22 +66,23 @@ describe('Slack File Upload for Long Emails', () => {
 
       await postEmailToSlack(mockApp, 'C12345', emailWithLongBody);
 
-      // Should call files.uploadV2
+      // Should call postMessage first
+      expect(mockApp.client.chat.postMessage).toHaveBeenCalledOnce();
+
+      // Should call files.uploadV2 with thread_ts
       expect(mockApp.client.files.uploadV2).toHaveBeenCalledOnce();
       expect(mockApp.client.files.uploadV2).toHaveBeenCalledWith(
         expect.objectContaining({
           channel_id: 'C12345',
           content: longBody.trim(), // Body text is trimmed
           filename: expect.stringContaining('email-body-'),
+          thread_ts: '12345.67', // Should use the ts from postMessage
           snippet_type: 'text',
         }),
       );
-
-      // Should still call postMessage for metadata blocks
-      expect(mockApp.client.chat.postMessage).toHaveBeenCalledOnce();
     });
 
-    test('should include initial_comment with email metadata in file upload', async () => {
+    test('should upload file as threaded reply to avoid duplicate messages', async () => {
       const longBody = 'Lorem ipsum dolor sit amet. '.repeat(150);
       const emailWithLongBody: Email = {
         ...testEmail,
@@ -90,11 +91,18 @@ describe('Slack File Upload for Long Emails', () => {
 
       await postEmailToSlack(mockApp, 'C12345', emailWithLongBody);
 
+      // File should be uploaded with thread_ts to appear in thread
       expect(mockApp.client.files.uploadV2).toHaveBeenCalledWith(
         expect.objectContaining({
-          initial_comment: expect.stringContaining('Test Subject'),
+          thread_ts: '12345.67',
         }),
       );
+
+      // Should NOT use initial_comment (which creates a separate message)
+      const uploadCall = (
+        mockApp.client.files.uploadV2 as ReturnType<typeof vi.fn>
+      ).mock.calls[0][0];
+      expect(uploadCall.initial_comment).toBeUndefined();
     });
 
     test('should use messageId in filename for file upload', async () => {
@@ -131,7 +139,7 @@ describe('Slack File Upload for Long Emails', () => {
 
       // Check that blocks include preview message
       const blocks = postMessageCall.blocks || [];
-      const hasPreviewMessage = blocks.some((block) => {
+      const hasPreviewMessage = blocks.some((block: unknown) => {
         const text = (block as { text?: { text: string } }).text?.text;
         return text?.includes('Full email body attached as file.');
       });
@@ -141,22 +149,55 @@ describe('Slack File Upload for Long Emails', () => {
   });
 
   describe('Error handling for file uploads', () => {
-    test('should handle file upload errors gracefully', async () => {
+    test('should update message and re-throw when file upload fails', async () => {
       const longBody = 'Lorem ipsum dolor sit amet. '.repeat(150);
       const emailWithLongBody: Email = {
         ...testEmail,
         body: { text: longBody },
       };
 
+      // Add mock for chat.update
+      const mockUpdate = vi.fn().mockResolvedValue({ ok: true });
+      (
+        mockApp.client.chat as { postMessage: unknown; update: unknown }
+      ).update = mockUpdate;
+
       // Mock file upload failure
       (
         mockApp.client.files.uploadV2 as ReturnType<typeof vi.fn>
       ).mockRejectedValue(new Error('File upload failed'));
 
-      // Should throw error
-      await expect(
-        postEmailToSlack(mockApp, 'C12345', emailWithLongBody),
-      ).rejects.toThrow();
+      // Should throw SlackPostError with file_upload_error code
+      const error = await postEmailToSlack(
+        mockApp,
+        'C12345',
+        emailWithLongBody,
+      ).catch((e) => e);
+
+      expect(error).toBeInstanceOf(SlackPostError);
+      expect(error.code).toBe('file_upload_error');
+      expect(error.message).toContain('Failed to upload email attachment');
+
+      // Should have updated the original message with error notice
+      expect(mockUpdate).toHaveBeenCalledOnce();
+      expect(mockUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channel: 'C12345',
+          ts: '12345.67',
+          text: expect.stringContaining('Attachment failed to upload'),
+          blocks: expect.arrayContaining([
+            expect.objectContaining({
+              type: 'context',
+              elements: expect.arrayContaining([
+                expect.objectContaining({
+                  type: 'mrkdwn',
+                  text: ':warning: *Attachment failed to upload.*',
+                }),
+              ]),
+            }),
+          ]),
+        }),
+      );
     });
   });
 });
