@@ -11,7 +11,7 @@ Emails forwarded to Slack are formatted using Block Kit (header, section blocks 
 ### The Problem
 
 Production error encountered:
-```
+```text
 Slack API error: slack_webapi_platform_error (actual: invalid_blocks)
 Original message: An API error occurred: invalid_blocks
 ```
