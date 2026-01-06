@@ -62,7 +62,7 @@ describe('Slack Platform Error Handling', () => {
         message: 'Slack is temporarily unavailable',
       };
 
-      vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(
+      (mockApp.client.chat.postMessage as ReturnType<typeof vi.fn>).mockRejectedValue(
         platformError,
       );
 
@@ -92,7 +92,7 @@ describe('Slack Platform Error Handling', () => {
         message: 'No authentication token provided.',
       };
 
-      vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(
+      (mockApp.client.chat.postMessage as ReturnType<typeof vi.fn>).mockRejectedValue(
         platformError,
       );
 
@@ -108,7 +108,7 @@ describe('Slack Platform Error Handling', () => {
       };
       platformError.code = 'slack_webapi_platform_error';
 
-      vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(
+      (mockApp.client.chat.postMessage as ReturnType<typeof vi.fn>).mockRejectedValue(
         platformError,
       );
 
@@ -137,7 +137,7 @@ describe('Slack Platform Error Handling', () => {
         message: 'Users not found',
       };
 
-      vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(
+      (mockApp.client.chat.postMessage as ReturnType<typeof vi.fn>).mockRejectedValue(
         platformError,
       );
 
@@ -168,7 +168,7 @@ describe('Slack Platform Error Handling', () => {
         message: 'Fatal error occurred',
       };
 
-      vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(
+      (mockApp.client.chat.postMessage as ReturnType<typeof vi.fn>).mockRejectedValue(
         platformError,
       );
 
@@ -196,7 +196,7 @@ describe('Slack Platform Error Handling', () => {
         message: 'No authentication token provided.',
       };
 
-      vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(
+      (mockApp.client.chat.postMessage as ReturnType<typeof vi.fn>).mockRejectedValue(
         platformError,
       );
 
@@ -218,7 +218,7 @@ describe('Slack Platform Error Handling', () => {
         message: 'Account is inactive',
       };
 
-      vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(
+      (mockApp.client.chat.postMessage as ReturnType<typeof vi.fn>).mockRejectedValue(
         platformError,
       );
 
@@ -245,7 +245,7 @@ describe('Slack Platform Error Handling', () => {
         message: 'Fatal error',
       };
 
-      vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(
+      (mockApp.client.chat.postMessage as ReturnType<typeof vi.fn>).mockRejectedValue(
         platformError,
       );
 
@@ -269,7 +269,7 @@ describe('Slack Platform Error Handling', () => {
         message: 'Fatal error occurred',
       };
 
-      vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(
+      (mockApp.client.chat.postMessage as ReturnType<typeof vi.fn>).mockRejectedValue(
         platformError,
       );
 
@@ -299,7 +299,7 @@ describe('Slack Platform Error Handling', () => {
         message: 'No authentication',
       };
 
-      vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(
+      (mockApp.client.chat.postMessage as ReturnType<typeof vi.fn>).mockRejectedValue(
         platformError,
       );
 
@@ -319,7 +319,7 @@ describe('Slack Platform Error Handling', () => {
   describe('Forwarded email scenario (no retry)', () => {
     test('should successfully process forwarded email when Slack API is healthy', async () => {
       // Mock successful API response
-      vi.mocked(mockApp.client.chat.postMessage).mockResolvedValue({
+      (mockApp.client.chat.postMessage as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         ts: '1234567890.123456',
         channel: 'C12345',
@@ -349,7 +349,7 @@ describe('Slack Platform Error Handling', () => {
         message: 'Fatal error',
       };
 
-      vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(
+      (mockApp.client.chat.postMessage as ReturnType<typeof vi.fn>).mockRejectedValue(
         platformError,
       );
 
@@ -376,7 +376,7 @@ describe('Slack Platform Error Handling', () => {
         message: 'No authentication token provided.',
       };
 
-      vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(authError);
+      (mockApp.client.chat.postMessage as ReturnType<typeof vi.fn>).mockRejectedValue(authError);
 
       await expect(
         postEmailToSlack(mockApp, 'C12345', testEmail),
@@ -398,7 +398,7 @@ describe('Slack Platform Error Handling', () => {
         message: 'Slack is temporarily unavailable',
       };
 
-      vi.mocked(mockApp.client.chat.postMessage).mockRejectedValue(outageError);
+      (mockApp.client.chat.postMessage as ReturnType<typeof vi.fn>).mockRejectedValue(outageError);
 
       await expect(
         postEmailToSlack(mockApp, 'C12345', testEmail),

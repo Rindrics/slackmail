@@ -82,9 +82,20 @@ export async function postEmailToSlack(
     throw new SlackPostError('Channel cannot be empty', 'invalid_channel');
   }
 
-  const { text, blocks } = formatEmailForSlack(email);
+  const { text, blocks, bodyAsFile } = formatEmailForSlack(email);
 
   try {
+    // If body is too long, upload it as a file
+    if (bodyAsFile) {
+      await app.client.files.uploadV2({
+        channel_id: channel,
+        content: bodyAsFile.content,
+        filename: bodyAsFile.filename,
+        initial_comment: text,
+        snippet_type: 'text',
+      });
+    }
+
     const result = await app.client.chat.postMessage({
       channel,
       text,
