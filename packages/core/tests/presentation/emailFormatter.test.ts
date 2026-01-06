@@ -144,11 +144,10 @@ describe('emailFormatter', () => {
       );
 
       // Check that blocks contain truncated preview
-      const bodyBlock = result.blocks.find(
-        (b) =>
-          (b as { text?: { text: string } }).text?.text?.includes(
-            'Full email body attached as file.',
-          ),
+      const bodyBlock = result.blocks.find((b) =>
+        (b as { text?: { text: string } }).text?.text?.includes(
+          'Full email body attached as file.',
+        ),
       );
       expect(bodyBlock).toBeDefined();
     });

@@ -149,9 +149,9 @@ describe('Slack File Upload for Long Emails', () => {
       };
 
       // Mock file upload failure
-      (mockApp.client.files.uploadV2 as ReturnType<typeof vi.fn>).mockRejectedValue(
-        new Error('File upload failed'),
-      );
+      (
+        mockApp.client.files.uploadV2 as ReturnType<typeof vi.fn>
+      ).mockRejectedValue(new Error('File upload failed'));
 
       // Should throw error
       await expect(
