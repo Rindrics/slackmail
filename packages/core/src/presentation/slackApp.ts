@@ -85,28 +85,29 @@ export async function postEmailToSlack(
   const { text, blocks, bodyAsFile } = formatEmailForSlack(email);
 
   try {
-    // If body is too long, upload it as a file
-    if (bodyAsFile) {
-      await app.client.files.uploadV2({
-        channel_id: channel,
-        content: bodyAsFile.content,
-        filename: bodyAsFile.filename,
-        initial_comment: text,
-        snippet_type: 'text',
-      });
-    }
-
+    // Post the main message first
     const result = await app.client.chat.postMessage({
       channel,
       text,
       blocks,
     });
 
-    if (!result.ok) {
+    if (!result.ok || !result.ts) {
       const errorCode = result.error || 'unknown_error';
       const message = getSlackErrorMessage(errorCode);
       console.error(`postEmailToSlack failed: ${message}`);
       throw new SlackPostError(message, errorCode);
+    }
+
+    // If body is too long, upload it as a file in a thread
+    if (bodyAsFile) {
+      await app.client.files.uploadV2({
+        channel_id: channel,
+        content: bodyAsFile.content,
+        filename: bodyAsFile.filename,
+        thread_ts: result.ts, // Upload file as a threaded reply
+        snippet_type: 'text',
+      });
     }
 
     return result.ts;

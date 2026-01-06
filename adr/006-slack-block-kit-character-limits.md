@@ -59,8 +59,14 @@ We will implement **conditional file upload** (Option 3):
 **File upload strategy**:
 - Use Slack `files.uploadV2` API
 - Filename format: `email-body-{messageId}.txt`
+- Upload file as a threaded reply using `thread_ts` parameter to avoid duplicate messages
 - Include metadata fields (From/To/Subject) in blocks even when body is a file
 - File contains full email body without truncation
+
+**Message flow for long emails**:
+1. Post main message with `chat.postMessage` (metadata + truncated preview)
+2. Capture the returned `ts` (timestamp) from the posted message
+3. Upload file with `files.uploadV2` using `thread_ts: ts` to attach as threaded reply
 
 **Return value changes**:
 ```typescript
