@@ -48,11 +48,29 @@ export function formatEmailAddresses(addresses: EmailAddress[]): string {
 }
 
 /**
+ * Slack Block Kit character limits
+ * Using safety margins to prevent edge cases
+ */
+const HEADER_TEXT_LIMIT = 140; // Slack limit is 150, using 140 for safety
+const BODY_TEXT_LIMIT = 2800; // Slack limit is 3000, using 2800 for safety
+
+/**
+ * Truncate text to specified limit, adding ellipsis if truncated
+ */
+function truncateText(text: string, limit: number): string {
+  if (text.length <= limit) {
+    return text;
+  }
+  return text.substring(0, limit - 3) + '...';
+}
+
+/**
  * Format email as Slack message blocks
  */
 export function formatEmailForSlack(email: Email): {
   text: string;
   blocks: KnownBlock[];
+  bodyAsFile?: { content: string; filename: string };
 } {
   const fromText = formatEmailAddress(email.from);
   const toText = formatEmailAddresses(email.to);
@@ -60,12 +78,15 @@ export function formatEmailForSlack(email: Email): {
 
   const text = `📧 ${email.subject} from ${fromText}`;
 
+  // Truncate subject for header block (Slack limit: 150 chars)
+  const headerText = truncateText(`📧 ${email.subject}`, HEADER_TEXT_LIMIT);
+
   const blocks: KnownBlock[] = [
     {
       type: 'header',
       text: {
         type: 'plain_text',
-        text: `📧 ${email.subject}`,
+        text: headerText,
         emoji: true,
       },
     },
@@ -98,18 +119,45 @@ export function formatEmailForSlack(email: Email): {
 
   const bodyText = getEmailBodyText(email.body);
 
-  blocks.push(
-    {
-      type: 'divider',
-    },
-    {
-      type: 'section',
-      text: {
-        type: 'mrkdwn',
-        text: bodyText,
-      },
-    },
-  );
+  // Check if body exceeds Slack limit (3000 chars)
+  let bodyAsFile: { content: string; filename: string } | undefined;
 
-  return { text, blocks };
+  if (bodyText.length > BODY_TEXT_LIMIT) {
+    // Body is too long - will be sent as file
+    bodyAsFile = {
+      content: bodyText,
+      filename: `email-body-${email.messageId}.txt`,
+    };
+
+    // Show truncated preview in blocks
+    const preview = truncateText(bodyText, BODY_TEXT_LIMIT);
+    blocks.push(
+      {
+        type: 'divider',
+      },
+      {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `${preview}\n\n_Full email body attached as file._`,
+        },
+      },
+    );
+  } else {
+    // Body fits in block - display normally
+    blocks.push(
+      {
+        type: 'divider',
+      },
+      {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: bodyText,
+        },
+      },
+    );
+  }
+
+  return { text, blocks, bodyAsFile };
 }

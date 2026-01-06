@@ -108,5 +108,60 @@ describe('emailFormatter', () => {
       );
       expect(bodyBlock).toBeDefined();
     });
+
+    it('should truncate long subject line (>140 chars)', () => {
+      const longSubject = 'A'.repeat(200); // 200 characters
+      const emailWithLongSubject: Email = {
+        ...email,
+        subject: longSubject,
+      };
+
+      const result = formatEmailForSlack(emailWithLongSubject);
+
+      const headerBlock = result.blocks[0] as {
+        type: string;
+        text: { text: string };
+      };
+      expect(headerBlock.type).toBe('header');
+      expect(headerBlock.text.text).toHaveLength(140);
+      expect(headerBlock.text.text.endsWith('...')).toBe(true);
+    });
+
+    it('should return bodyAsFile when body exceeds 2800 chars', () => {
+      const longBody = 'Lorem ipsum dolor sit amet. '.repeat(150); // ~4200 characters
+      const emailWithLongBody: Email = {
+        ...email,
+        body: { text: longBody },
+      };
+
+      const result = formatEmailForSlack(emailWithLongBody);
+
+      expect(result.bodyAsFile).toBeDefined();
+      // Body text is trimmed by getEmailBodyText
+      expect(result.bodyAsFile?.content).toBe(longBody.trim());
+      expect(result.bodyAsFile?.filename).toBe(
+        `email-body-${email.messageId}.txt`,
+      );
+
+      // Check that blocks contain truncated preview
+      const bodyBlock = result.blocks.find((b) =>
+        (b as { text?: { text: string } }).text?.text?.includes(
+          'Full email body attached as file.',
+        ),
+      );
+      expect(bodyBlock).toBeDefined();
+    });
+
+    it('should not return bodyAsFile when body is within limit', () => {
+      const shortBody = 'Short email body.';
+      const emailWithShortBody: Email = {
+        ...email,
+        body: { text: shortBody },
+      };
+
+      const result = formatEmailForSlack(emailWithShortBody);
+
+      expect(result.bodyAsFile).toBeUndefined();
+    });
   });
 });
