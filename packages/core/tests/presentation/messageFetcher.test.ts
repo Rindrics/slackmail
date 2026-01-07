@@ -25,7 +25,11 @@ describe('fetchMessage', () => {
       ],
     });
 
-    const result = await fetchMessage(mockClient, 'C01234ABCD', '1234567890.123456');
+    const result = await fetchMessage(
+      mockClient,
+      'C01234ABCD',
+      '1234567890.123456',
+    );
 
     expect(result).toBe('Test message content');
     expect(mockHistory).toHaveBeenCalledWith({

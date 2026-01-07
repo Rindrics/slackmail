@@ -35,9 +35,7 @@ export function parseMessageUrl(url: string): ParsedMessageUrl {
   const match = url.match(pattern);
 
   if (!match) {
-    throw new MessageUrlParseError(
-      `Invalid Slack message URL format: ${url}`,
-    );
+    throw new MessageUrlParseError(`Invalid Slack message URL format: ${url}`);
   }
 
   const channelId = match[1];

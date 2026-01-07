@@ -24,8 +24,7 @@ describe('parseMessageUrl', () => {
   });
 
   it('should handle URL with shorter microsecond part', () => {
-    const url =
-      'https://workspace.slack.com/archives/C01234ABCD/p1234567890';
+    const url = 'https://workspace.slack.com/archives/C01234ABCD/p1234567890';
     const result = parseMessageUrl(url);
 
     expect(result.channelId).toBe('C01234ABCD');
