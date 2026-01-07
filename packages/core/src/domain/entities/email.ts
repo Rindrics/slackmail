@@ -8,6 +8,8 @@ export interface Email {
   from: EmailAddress;
   to: EmailAddress[];
   cc?: EmailAddress[];
+  bcc?: EmailAddress[];
+  replyTo?: EmailAddress;
   subject: string;
   body: {
     text?: string;
@@ -23,6 +25,8 @@ export function createEmail(params: {
   from: EmailAddress;
   to: EmailAddress[];
   cc?: EmailAddress[];
+  bcc?: EmailAddress[];
+  replyTo?: EmailAddress;
   subject: string;
   body: { text?: string; html?: string };
   date: Date;
@@ -34,6 +38,8 @@ export function createEmail(params: {
     from: params.from,
     to: params.to,
     cc: params.cc,
+    bcc: params.bcc,
+    replyTo: params.replyTo,
     subject: params.subject,
     body: params.body,
     date: params.date,
