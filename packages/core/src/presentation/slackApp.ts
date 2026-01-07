@@ -333,7 +333,7 @@ export function registerMailSendingListeners(
   config: MailSendingConfig,
 ): void {
   // Handle "@mailbot template" - generate and post email template
-  app.message(/@mailbot\s+template/i, async ({ message, say }) => {
+  app.message(/@mailbot\s+template/i, async ({ say }) => {
     try {
       const template = generateEmailTemplate();
       await say({

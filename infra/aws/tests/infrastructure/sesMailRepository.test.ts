@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Email } from '@rindrics/slackmail';
 import { SESMailRepository } from '@/infrastructure/sesMailRepository';
 import nodemailer from 'nodemailer';
-import { SESv2Client } from '@aws-sdk/client-sesv2';
-import { Readable } from 'stream';
+import type { SESv2Client } from '@aws-sdk/client-sesv2';
+import { Readable } from 'node:stream';
 
 // Mock nodemailer
 vi.mock('nodemailer');

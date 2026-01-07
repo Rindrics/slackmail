@@ -70,7 +70,6 @@ export function parseEmailTemplate(text: string): ParsedEmailTemplate {
     const subjectMatch = line.match(/^Subject:\s*(.+)$/i);
     if (subjectMatch) {
       subject = subjectMatch[1].trim();
-      continue;
     }
   }
 
