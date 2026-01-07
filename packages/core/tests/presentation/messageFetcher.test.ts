@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { WebClient } from '@slack/web-api';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchMessage, MessageFetchError } from '@/presentation/messageFetcher';
 
 describe('fetchMessage', () => {

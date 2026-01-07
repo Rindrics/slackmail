@@ -1,6 +1,5 @@
 import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2';
-import type { MailRepository } from '@rindrics/slackmail';
-import type { Email, EmailAddress } from '@rindrics/slackmail';
+import type { Email, EmailAddress, MailRepository } from '@rindrics/slackmail';
 import nodemailer from 'nodemailer';
 
 /**
