@@ -332,9 +332,22 @@ export function registerMailSendingListeners(
   app: App,
   config: MailSendingConfig,
 ): void {
+  // Debug: Log all incoming messages
+  app.message(async ({ message, next }) => {
+    console.log(
+      '[Bolt] Received message event:',
+      JSON.stringify(message, null, 2),
+    );
+    await next();
+  });
+
   // Handle "@bot template" - generate and post email template
   // Slack mentions are formatted as <@USERID>, not @username
-  app.message(/<@[A-Z0-9]+>\s+template/i, async ({ say }) => {
+  app.message(/<@[A-Z0-9]+>\s+template/i, async ({ message, say }) => {
+    console.log(
+      '[Bolt] Matched template pattern, message:',
+      JSON.stringify(message, null, 2),
+    );
     try {
       const template = generateEmailTemplate();
       await say({
