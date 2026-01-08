@@ -39,7 +39,12 @@ function loadEnvConfig(): EnvConfig {
   const slackChannelId = process.env.SLACK_CHANNEL_ID?.trim();
   const emailDomain = process.env.EMAIL_DOMAIN?.trim();
 
-  if (!slackSigningSecret || !slackBotToken || !slackChannelId || !emailDomain) {
+  if (
+    !slackSigningSecret ||
+    !slackBotToken ||
+    !slackChannelId ||
+    !emailDomain
+  ) {
     const missing = [
       !slackSigningSecret && 'SLACK_SIGNING_SECRET',
       !slackBotToken && 'SLACK_BOT_TOKEN',
@@ -265,9 +270,7 @@ function isApiGatewayEvent(
 /**
  * Type guard to check if event is from S3
  */
-function isS3Event(
-  event: S3Event | APIGatewayProxyEventV2,
-): event is S3Event {
+function isS3Event(event: S3Event | APIGatewayProxyEventV2): event is S3Event {
   return 'Records' in event && event.Records?.[0]?.eventSource === 'aws:s3';
 }
 

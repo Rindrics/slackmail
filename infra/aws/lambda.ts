@@ -1,6 +1,7 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 import {
+  emailDomain,
   sentryDsn,
   slackBotToken,
   slackChannelId,
@@ -9,6 +10,7 @@ import {
   tags,
 } from './config';
 import { emailBucket } from './s3';
+import { sesDomainIdentity } from './ses';
 
 // Get AWS region and account ID for constructing ARNs
 const currentRegion = aws.getRegion();
@@ -77,6 +79,24 @@ export const lambdaS3Policy = new aws.iam.RolePolicy('lambda-s3-policy', {
   }`,
 });
 
+// Policy: SES send email access
+export const lambdaSesPolicy = new aws.iam.RolePolicy('lambda-ses-policy', {
+  role: lambdaRole.id,
+  policy: pulumi.interpolate`{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "ses:SendEmail",
+          "ses:SendRawEmail"
+        ],
+        "Resource": "${sesDomainIdentity.arn}"
+      }
+    ]
+  }`,
+});
+
 // Lambda function
 export const boltLambda = new aws.lambda.Function('slackmail-juzumaru', {
   name: lambdaName,
@@ -93,6 +113,7 @@ export const boltLambda = new aws.lambda.Function('slackmail-juzumaru', {
     variables: {
       NODE_ENV: stackName,
       EMAIL_BUCKET_NAME: emailBucket.bucket,
+      EMAIL_DOMAIN: emailDomain,
       SLACK_SIGNING_SECRET: slackSigningSecret,
       SLACK_BOT_TOKEN: slackBotToken,
       SLACK_CHANNEL_ID: slackChannelId,
