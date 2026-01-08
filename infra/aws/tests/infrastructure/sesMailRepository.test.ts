@@ -200,7 +200,7 @@ describe('SESMailRepository', () => {
     it('should validate sender domain case-sensitively', async () => {
       const mixedCaseEmail: Email = {
         ...testEmail,
-        from: { address: 'sender@verified-domain.com' },
+        from: { address: 'sender@Verified-Domain.COM' },
       };
 
       await expect(repository.sendEmail(mixedCaseEmail)).rejects.toThrow(
