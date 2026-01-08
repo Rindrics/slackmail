@@ -121,13 +121,29 @@ export function parseEmailTemplate(text: string): ParsedEmailTemplate {
  * Supports formats:
  * - email@example.com
  * - Name <email@example.com>
+ * - <mailto:email@example.com|email@example.com> (Slack mailto link)
+ * - <mailto:email@example.com> (Slack mailto link without display text)
  *
  * @param addressStr - Email address string
  * @returns Parsed EmailAddress or null if invalid
  */
 function parseEmailAddress(addressStr: string): EmailAddress | null {
+  let normalized = addressStr.trim();
+
+  // Handle Slack mailto link format: <mailto:email@example.com|display_text>
+  const mailtoWithText = normalized.match(/<mailto:([^|>]+)\|[^>]*>/);
+  if (mailtoWithText) {
+    normalized = mailtoWithText[1].trim();
+  } else {
+    // Handle Slack mailto link format without display text: <mailto:email@example.com>
+    const mailtoSimple = normalized.match(/<mailto:([^>]+)>/);
+    if (mailtoSimple) {
+      normalized = mailtoSimple[1].trim();
+    }
+  }
+
   // Match: Name <email@example.com>
-  const namedMatch = addressStr.match(/^(.+?)\s*<(.+?)>$/);
+  const namedMatch = normalized.match(/^(.+?)\s*<(.+?)>$/);
   if (namedMatch) {
     const name = namedMatch[1].trim();
     const address = namedMatch[2].trim();
@@ -138,7 +154,7 @@ function parseEmailAddress(addressStr: string): EmailAddress | null {
   }
 
   // Match: email@example.com
-  const simpleAddress = addressStr.trim();
+  const simpleAddress = normalized.trim();
   if (isValidEmail(simpleAddress)) {
     return { address: simpleAddress };
   }
