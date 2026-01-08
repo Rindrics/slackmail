@@ -33,6 +33,9 @@ describe('Sentry Integration', () => {
     if (!process.env.SLACK_CHANNEL_ID) {
       process.env.SLACK_CHANNEL_ID = 'C123456789';
     }
+    if (!process.env.EMAIL_DOMAIN) {
+      process.env.EMAIL_DOMAIN = 'test.example.com';
+    }
     // Set SENTRY_DSN for error capture tests
     if (!process.env.SENTRY_DSN) {
       process.env.SENTRY_DSN = 'https://test@sentry.io/123';
@@ -75,10 +78,31 @@ describe('Sentry Integration', () => {
       }
     });
 
-    it('should use @sentry/serverless default AWS Lambda integrations (auto-wrap handler)', () => {
+    it('should use @sentry/serverless default AWS Lambda integrations (auto-wrap handler)', async () => {
       const mockWrapHandler = vi.mocked(AWSLambda.wrapHandler);
+      mockWrapHandler.mockClear();
 
-      // Handler should be wrapped with AWSLambda.wrapHandler
+      // Handler wraps with AWSLambda.wrapHandler when processing S3 events
+      // Create a minimal S3 event to trigger the wrapper
+      const s3Event: S3Event = {
+        Records: [
+          {
+            eventSource: 'aws:s3',
+            s3: {
+              bucket: { name: 'test-bucket' },
+              object: { key: 'test-key.eml' },
+            },
+          } as S3Event['Records'][0],
+        ],
+      };
+
+      try {
+        await handler(s3Event, {} as Context, (() => {}) as Callback);
+      } catch {
+        // Expected to fail due to mocked S3
+      }
+
+      // wrapHandler should be called when processing S3 events
       expect(mockWrapHandler).toHaveBeenCalled();
     });
 
