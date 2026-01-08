@@ -3,10 +3,20 @@ import {
   createSlackApp,
   MailparserEmailParser,
   ReceiveMailUseCase,
+  registerMailSendingListeners,
+  SendMailUseCase,
 } from '@rindrics/slackmail';
 import { AWSLambda } from '@sentry/serverless';
-import type { S3Event, S3Handler } from 'aws-lambda';
+import type {
+  APIGatewayProxyEventV2,
+  APIGatewayProxyResultV2,
+  Callback,
+  Context,
+  S3Event,
+  S3Handler,
+} from 'aws-lambda';
 import { S3StorageRepository } from '@/infrastructure/s3StorageRepository';
+import { SESMailRepository } from '@/infrastructure/sesMailRepository';
 
 /**
  * Required environment variables configuration
@@ -15,6 +25,8 @@ interface EnvConfig {
   slackSigningSecret: string;
   slackBotToken: string;
   slackChannelId: string;
+  emailDomain: string;
+  defaultSenderAddress: string;
 }
 
 /**
@@ -25,12 +37,14 @@ function loadEnvConfig(): EnvConfig {
   const slackSigningSecret = process.env.SLACK_SIGNING_SECRET?.trim();
   const slackBotToken = process.env.SLACK_BOT_TOKEN?.trim();
   const slackChannelId = process.env.SLACK_CHANNEL_ID?.trim();
+  const emailDomain = process.env.EMAIL_DOMAIN?.trim();
 
-  if (!slackSigningSecret || !slackBotToken || !slackChannelId) {
+  if (!slackSigningSecret || !slackBotToken || !slackChannelId || !emailDomain) {
     const missing = [
       !slackSigningSecret && 'SLACK_SIGNING_SECRET',
       !slackBotToken && 'SLACK_BOT_TOKEN',
       !slackChannelId && 'SLACK_CHANNEL_ID',
+      !emailDomain && 'EMAIL_DOMAIN',
     ].filter(Boolean);
 
     for (const name of missing) {
@@ -46,6 +60,8 @@ function loadEnvConfig(): EnvConfig {
     slackSigningSecret,
     slackBotToken,
     slackChannelId,
+    emailDomain,
+    defaultSenderAddress: `noreply@${emailDomain}`,
   };
 }
 
@@ -53,10 +69,24 @@ function loadEnvConfig(): EnvConfig {
 const config = loadEnvConfig();
 
 // Initialize Slack App (singleton)
-const { app } = createSlackApp({
+const { app, receiver } = createSlackApp({
   signingSecret: config.slackSigningSecret,
   botToken: config.slackBotToken,
   channel: config.slackChannelId,
+});
+
+// Initialize mail sending dependencies
+const mailRepository = new SESMailRepository({
+  allowedSenderDomain: config.emailDomain,
+  defaultSenderAddress: config.defaultSenderAddress,
+});
+
+const sendMailUseCase = new SendMailUseCase(mailRepository);
+
+// Register mail sending listeners (template and send commands)
+registerMailSendingListeners(app, {
+  sendMailUseCase,
+  defaultSenderAddress: config.defaultSenderAddress,
 });
 
 /**
@@ -224,8 +254,65 @@ const rawHandler: S3Handler = async (event: S3Event) => {
 };
 
 /**
- * Export handler wrapped with Sentry for automatic error capturing and flushing
+ * Type guard to check if event is from API Gateway
  */
-export const handler = AWSLambda.wrapHandler(rawHandler, {
-  flushTimeout: 2000, // 2 second flush timeout
-});
+function isApiGatewayEvent(
+  event: S3Event | APIGatewayProxyEventV2,
+): event is APIGatewayProxyEventV2 {
+  return 'requestContext' in event && 'http' in (event.requestContext || {});
+}
+
+/**
+ * Type guard to check if event is from S3
+ */
+function isS3Event(
+  event: S3Event | APIGatewayProxyEventV2,
+): event is S3Event {
+  return 'Records' in event && event.Records?.[0]?.eventSource === 'aws:s3';
+}
+
+/**
+ * Unified Lambda handler that routes to appropriate handler based on event source.
+ * - API Gateway events → Slack Bolt handler
+ * - S3 events → Email processing handler
+ */
+export const handler = async (
+  event: S3Event | APIGatewayProxyEventV2,
+  context: Context,
+  callback: Callback,
+): Promise<void | APIGatewayProxyResultV2> => {
+  // Handle API Gateway requests (Slack Events API)
+  if (isApiGatewayEvent(event)) {
+    // Handle Slack URL verification challenge
+    if (event.body) {
+      try {
+        const body = JSON.parse(event.body);
+        if (body.type === 'url_verification' && body.challenge) {
+          console.log('[Slack] Responding to URL verification challenge');
+          return {
+            statusCode: 200,
+            headers: { 'Content-Type': 'text/plain' },
+            body: body.challenge,
+          };
+        }
+      } catch {
+        // Not JSON or not a challenge, continue to Bolt handler
+      }
+    }
+
+    // Delegate to Slack Bolt receiver
+    const boltHandler = await receiver.start();
+    return boltHandler(event, context, callback);
+  }
+
+  // Handle S3 events (email processing)
+  if (isS3Event(event)) {
+    const wrappedHandler = AWSLambda.wrapHandler(rawHandler, {
+      flushTimeout: 2000,
+    });
+    return wrappedHandler(event, context as never, callback as never);
+  }
+
+  console.error('Unknown event type:', JSON.stringify(event));
+  throw new Error('Unknown event type');
+};
