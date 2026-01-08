@@ -1,11 +1,11 @@
 import { App, AwsLambdaReceiver } from '@slack/bolt';
+import type { SendMailUseCase } from '@/application/usecases/sendMailUseCase';
 import type { Email } from '@/domain/entities';
 import { formatEmailForSlack } from './emailFormatter';
 import { generateEmailTemplate } from './emailTemplateGenerator';
 import { parseEmailTemplate } from './emailTemplateParser';
 import { fetchMessage } from './messageFetcher';
 import { parseMessageUrl } from './messageUrlParser';
-import type { SendMailUseCase } from '@/application/usecases/sendMailUseCase';
 
 export interface SlackAppConfig {
   signingSecret: string;

@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  SendMailUseCase,
   type SendMailInput,
+  SendMailUseCase,
 } from '@/application/usecases/sendMailUseCase';
 import type { MailRepository } from '@/domain/repositories/mailRepository';
 

@@ -6,7 +6,7 @@ export {
 } from './receiveMailUseCase';
 
 export {
-  SendMailUseCase,
   type SendMailInput,
   type SendMailOutput,
+  SendMailUseCase,
 } from './usecases/sendMailUseCase';
