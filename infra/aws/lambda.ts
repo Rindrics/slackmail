@@ -15,7 +15,7 @@ const currentRegion = aws.getRegion();
 const currentIdentity = aws.getCallerIdentity();
 
 // Lambda function name (defined early for log group)
-const lambdaName = 'bolt-lambda';
+const lambdaName = 'slackmail-juzumaru';
 
 // CloudWatch Log Group for Lambda
 export const lambdaLogGroup = new aws.cloudwatch.LogGroup('lambda-log-group', {
@@ -78,7 +78,8 @@ export const lambdaS3Policy = new aws.iam.RolePolicy('lambda-s3-policy', {
 });
 
 // Lambda function
-export const boltLambda = new aws.lambda.Function('bolt-lambda', {
+export const boltLambda = new aws.lambda.Function('slackmail-juzumaru', {
+  name: lambdaName,
   runtime: aws.lambda.Runtime.NodeJS22dX,
   handler: 'index.handler',
   role: lambdaRole.arn,
