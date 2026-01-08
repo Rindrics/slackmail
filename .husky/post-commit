@@ -1,0 +1,4 @@
+# Format files changed in the last commit
+# Changes remain unstaged for a separate "format" commit
+pnpm lint-staged --diff="HEAD~1 HEAD" --config=.lintstagedrc.format.json
+
