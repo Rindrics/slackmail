@@ -387,13 +387,18 @@ export function registerMailSendingListeners(
   });
 
   // Handle "@bot <message_url>" - fetch, parse, confirm, and send email
-  // Slack mentions are formatted as <@USERID>, not @username
+  // Slack mentions are formatted as <@USERID>, URLs are wrapped in <URL> or <URL|text>
   app.message(
-    /<@[A-Z0-9]+>\s+(https:\/\/[^\s]+\.slack\.com\/archives\/[A-Z0-9]+\/p\d+)/i,
+    /<@[A-Z0-9]+>\s+<(https:\/\/[^|>\s]+\.slack\.com\/archives\/[A-Z0-9]+\/p\d+)/i,
     async ({ message, say, client }) => {
+      console.log(
+        '[Bolt] Matched URL pattern, message:',
+        JSON.stringify(message, null, 2),
+      );
       try {
+        // Slack wraps URLs in <URL> or <URL|display_text> format
         const match = (message as { text?: string }).text?.match(
-          /<@[A-Z0-9]+>\s+(https:\/\/[^\s]+\.slack\.com\/archives\/[A-Z0-9]+\/p\d+)/i,
+          /<@[A-Z0-9]+>\s+<(https:\/\/[^|>\s]+\.slack\.com\/archives\/[A-Z0-9]+\/p\d+)/i,
         );
 
         if (!match || !match[1]) {
