@@ -95,10 +95,20 @@ export const handler = async (
   context: Context,
   callback: Callback,
 ): Promise<APIGatewayProxyResultV2> => {
+  console.log(
+    '[Slack Handler] Received event:',
+    JSON.stringify(event, null, 2),
+  );
+
   // Handle Slack URL verification challenge
   if (event.body) {
     try {
       const body = JSON.parse(event.body);
+      console.log(
+        '[Slack Handler] Parsed body:',
+        JSON.stringify(body, null, 2),
+      );
+
       if (body.type === 'url_verification' && body.challenge) {
         console.log('[Slack] Responding to URL verification challenge');
         return {
@@ -107,12 +117,18 @@ export const handler = async (
           body: body.challenge,
         };
       }
-    } catch {
-      // Not JSON or not a challenge, continue to Bolt handler
+    } catch (e) {
+      console.log('[Slack Handler] Body parse error or not a challenge:', e);
     }
   }
 
   // Delegate to Slack Bolt receiver
+  console.log('[Slack Handler] Delegating to Bolt receiver');
   const boltHandler = await receiver.start();
-  return boltHandler(event, context, callback);
+  const result = await boltHandler(event, context, callback);
+  console.log(
+    '[Slack Handler] Bolt response:',
+    JSON.stringify(result, null, 2),
+  );
+  return result;
 };
