@@ -332,8 +332,9 @@ export function registerMailSendingListeners(
   app: App,
   config: MailSendingConfig,
 ): void {
-  // Handle "@mailbot template" - generate and post email template
-  app.message(/@mailbot\s+template/i, async ({ say }) => {
+  // Handle "@bot template" - generate and post email template
+  // Slack mentions are formatted as <@USERID>, not @username
+  app.message(/<@[A-Z0-9]+>\s+template/i, async ({ say }) => {
     try {
       const template = generateEmailTemplate();
       await say({
@@ -358,7 +359,7 @@ export function registerMailSendingListeners(
             elements: [
               {
                 type: 'mrkdwn',
-                text: 'After filling out the template, right-click the message → Copy link, then mention me: `@mailbot <message_url>`',
+                text: 'After filling out the template, right-click the message → Copy link, then mention me with the URL.',
               },
             ],
           },
@@ -372,13 +373,14 @@ export function registerMailSendingListeners(
     }
   });
 
-  // Handle "@mailbot <message_url>" - fetch, parse, confirm, and send email
+  // Handle "@bot <message_url>" - fetch, parse, confirm, and send email
+  // Slack mentions are formatted as <@USERID>, not @username
   app.message(
-    /@mailbot\s+(https:\/\/[^\s]+\.slack\.com\/archives\/[A-Z0-9]+\/p\d+)/i,
+    /<@[A-Z0-9]+>\s+(https:\/\/[^\s]+\.slack\.com\/archives\/[A-Z0-9]+\/p\d+)/i,
     async ({ message, say, client }) => {
       try {
         const match = (message as { text?: string }).text?.match(
-          /@mailbot\s+(https:\/\/[^\s]+\.slack\.com\/archives\/[A-Z0-9]+\/p\d+)/i,
+          /<@[A-Z0-9]+>\s+(https:\/\/[^\s]+\.slack\.com\/archives\/[A-Z0-9]+\/p\d+)/i,
         );
 
         if (!match || !match[1]) {

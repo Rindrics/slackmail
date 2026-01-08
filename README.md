@@ -33,6 +33,7 @@ Receive emails and forward them to a Slack channel.
 ### 1. Slack App Setup
 
 1. Create a new app at [Slack API](https://api.slack.com/apps)
+
 2. Add the following **Bot Token Scopes** under **OAuth & Permissions**:
 
 | Scope | Description |
@@ -40,14 +41,41 @@ Receive emails and forward them to a Slack channel.
 | `chat:write` | Post messages to channels |
 | `chat:write.public` | Post to public channels the bot isn't a member of |
 | `files:write` | Upload, edit, and delete files (required for long emails >2800 characters) |
+| `channels:history` | Read messages from public channels (for fetching email templates) |
+| `groups:history` | Read messages from private channels (if using private channels) |
 
-3. Install the app to your workspace under **Install App**
-4. Note down the following credentials:
+3. Enable **Event Subscriptions** and subscribe to the following bot events:
+
+| Event | Description |
+|-------|-------------|
+| `app_mention` | Detect when the bot is mentioned (`@yourbot`) |
+| `message.channels` | Listen for messages in public channels (optional) |
+
+4. Install the app to your workspace under **Install App**
+
+5. Note down the following credentials:
    - **Bot User OAuth Token** (`xoxb-...`) → `SLACK_BOT_TOKEN`
    - **Signing Secret** (under Basic Information) → `SLACK_SIGNING_SECRET`
    - **Channel ID** (target channel for notifications) → `SLACK_CHANNEL_ID`
 
 > **Note**: You can get the Channel ID by right-clicking a channel in Slack → "Copy link" and extracting the last part of the URL (e.g., `C01234ABCDE`)
+
+### Bot Commands
+
+| Command | Description |
+|---------|-------------|
+| `@yourbot template` | Generate an email template to fill out |
+| `@yourbot <message_url>` | Parse a message and show email send confirmation |
+
+> **Note**: Replace `@yourbot` with your actual bot name.
+
+#### Sending an Email
+
+1. Mention the bot with `@yourbot template` to get a template
+2. Copy the template, fill it out, and post as a new message
+3. Right-click the message → Copy link
+4. Mention the bot with `@yourbot <copied_url>`
+5. Review the preview and click "Send Email" to send
 
 ### 2. AWS Setup
 
