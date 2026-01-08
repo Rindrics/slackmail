@@ -1,6 +1,6 @@
 import * as aws from '@pulumi/aws';
 import { projectName, stackName, tags } from './config';
-import { boltLambda } from './lambda';
+import { slackLambda } from './lambda';
 
 // API Gateway for Slack webhook endpoint
 export const api = new aws.apigatewayv2.Api('slack-webhook-api', {
@@ -15,7 +15,7 @@ export const lambdaIntegration = new aws.apigatewayv2.Integration(
   {
     apiId: api.id,
     integrationType: 'AWS_PROXY',
-    integrationUri: boltLambda.invokeArn,
+    integrationUri: slackLambda.invokeArn,
     payloadFormatVersion: '2.0',
   },
 );
@@ -39,11 +39,11 @@ export const stage = new aws.apigatewayv2.Stage('default-stage', {
 });
 
 // Permission for API Gateway to invoke Lambda
-export const lambdaPermission = new aws.lambda.Permission(
+export const apiGatewayLambdaPermission = new aws.lambda.Permission(
   'api-gateway-lambda-permission',
   {
     action: 'lambda:InvokeFunction',
-    function: boltLambda.name,
+    function: slackLambda.name,
     principal: 'apigateway.amazonaws.com',
     sourceArn: api.executionArn.apply((arn) => `${arn}/*/*`),
   },

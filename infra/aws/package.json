@@ -6,7 +6,7 @@
   "main": "index.ts",
   "scripts": {
     "build": "tsc -b tsconfig.build.json",
-    "build:lambda": "esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/index.js --external:@aws-sdk/*",
+    "build:lambda": "esbuild src/s3-handler.ts src/slack-handler.ts --bundle --platform=node --target=node20 --outdir=dist --external:@aws-sdk/*",
     "preview": "pnpm build:lambda && pulumi preview --stack dev",
     "up": "pnpm build:lambda && pulumi up --stack dev",
     "destroy": "pulumi destroy --stack dev",

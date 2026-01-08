@@ -1,13 +1,13 @@
 import * as aws from '@pulumi/aws';
-import { boltLambda } from './lambda';
+import { s3Lambda } from './lambda';
 import { emailBucket } from './s3';
 
 // Permission for S3 to invoke Lambda
-export const s3LambdaPermission = new aws.lambda.Permission(
-  's3-lambda-permission',
+export const s3InvokeLambdaPermission = new aws.lambda.Permission(
+  's3-invoke-lambda-permission',
   {
     action: 'lambda:InvokeFunction',
-    function: boltLambda.name,
+    function: s3Lambda.name,
     principal: 's3.amazonaws.com',
     sourceArn: emailBucket.arn,
   },
@@ -20,12 +20,12 @@ export const bucketNotification = new aws.s3.BucketNotification(
     bucket: emailBucket.id,
     lambdaFunctions: [
       {
-        lambdaFunctionArn: boltLambda.arn,
+        lambdaFunctionArn: s3Lambda.arn,
         events: ['s3:ObjectCreated:*'],
       },
     ],
   },
   {
-    dependsOn: [s3LambdaPermission],
+    dependsOn: [s3InvokeLambdaPermission],
   },
 );
