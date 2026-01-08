@@ -54,6 +54,55 @@ export const mxRecord = new aws.route53.Record('mx-record', {
 });
 
 // =============================================================================
+// SPF Record
+// =============================================================================
+
+export const spfRecord = new aws.route53.Record('spf-record', {
+  zoneId: route53ZoneId,
+  name: emailDomain,
+  type: 'TXT',
+  ttl: 600,
+  records: ['v=spf1 include:amazonses.com ~all'],
+});
+
+// =============================================================================
+// DKIM Configuration
+// =============================================================================
+
+export const sesDomainDkim = new aws.ses.DomainDkim('ses-domain-dkim', {
+  domain: sesDomainIdentity.domain,
+});
+
+// Create CNAME records for DKIM verification
+// SES generates 3 DKIM tokens that need to be added as CNAME records
+export const dkimRecords = sesDomainDkim.dkimTokens.apply((tokens) =>
+  tokens.map(
+    (token, index) =>
+      new aws.route53.Record(`dkim-record-${index}`, {
+        zoneId: route53ZoneId,
+        name: `${token}._domainkey.${emailDomain}`,
+        type: 'CNAME',
+        ttl: 600,
+        records: [`${token}.dkim.amazonses.com`],
+      }),
+  ),
+);
+
+// =============================================================================
+// DMARC Record
+// =============================================================================
+
+export const dmarcRecord = new aws.route53.Record('dmarc-record', {
+  zoneId: route53ZoneId,
+  name: `_dmarc.${emailDomain}`,
+  type: 'TXT',
+  ttl: 3600,
+  // p=none: Monitor mode - no action taken on failed emails (for initial deployment)
+  // Change to p=quarantine or p=reject after monitoring confirms proper authentication
+  records: ['v=DMARC1; p=none; adkim=s; aspf=s'],
+});
+
+// =============================================================================
 // S3 Bucket Policy for SES
 // =============================================================================
 
