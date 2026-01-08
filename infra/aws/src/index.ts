@@ -283,7 +283,7 @@ export const handler = async (
   event: S3Event | APIGatewayProxyEventV2,
   context: Context,
   callback: Callback,
-): Promise<void | APIGatewayProxyResultV2> => {
+): Promise<undefined | APIGatewayProxyResultV2> => {
   // Handle API Gateway requests (Slack Events API)
   if (isApiGatewayEvent(event)) {
     // Handle Slack URL verification challenge
@@ -313,7 +313,8 @@ export const handler = async (
     const wrappedHandler = AWSLambda.wrapHandler(rawHandler, {
       flushTimeout: 2000,
     });
-    return wrappedHandler(event, context as never, callback as never);
+    await wrappedHandler(event, context as never, callback as never);
+    return undefined;
   }
 
   console.error('Unknown event type:', JSON.stringify(event));
