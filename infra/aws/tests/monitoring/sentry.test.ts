@@ -19,10 +19,10 @@ vi.mock('@sentry/serverless', () => ({
 
 describe('Sentry Integration', () => {
   let AWSLambda: typeof import('@sentry/serverless').AWSLambda;
-  let handler: S3Handler;
+  let s3Handler: S3Handler;
 
   beforeAll(async () => {
-    // Set up required environment variables before importing index module
+    // Set up required environment variables before importing s3-handler module
     // These are needed by loadEnvConfig() which runs at module level
     if (!process.env.SLACK_SIGNING_SECRET) {
       process.env.SLACK_SIGNING_SECRET = 'test-signing-secret';
@@ -41,8 +41,8 @@ describe('Sentry Integration', () => {
     // Import modules after mocks and env vars are set up
     const SentryModule = await import('@sentry/serverless');
     AWSLambda = SentryModule.AWSLambda;
-    const indexModule = await import('../../src/index.js');
-    handler = indexModule.handler;
+    const s3HandlerModule = await import('../../src/s3-handler.js');
+    s3Handler = s3HandlerModule.handler;
   });
 
   describe('Initialization', () => {
@@ -78,8 +78,12 @@ describe('Sentry Integration', () => {
     it('should use @sentry/serverless default AWS Lambda integrations (auto-wrap handler)', () => {
       const mockWrapHandler = vi.mocked(AWSLambda.wrapHandler);
 
-      // Handler should be wrapped with AWSLambda.wrapHandler
+      // wrapHandler is called at module level when s3-handler.ts is imported
+      // The handler is exported as: export const handler = AWSLambda.wrapHandler(rawHandler, { flushTimeout: 2000 })
       expect(mockWrapHandler).toHaveBeenCalled();
+      expect(mockWrapHandler).toHaveBeenCalledWith(expect.any(Function), {
+        flushTimeout: 2000,
+      });
     });
 
     it('should skip Sentry initialization and log info message when SENTRY_DSN is not set (optional mode)', () => {
@@ -148,7 +152,7 @@ describe('Sentry Integration', () => {
       const mockContext = {} as Context;
       const mockCallback = (() => {}) as Callback;
       await expect(
-        handler(testEvent, mockContext, mockCallback),
+        s3Handler(testEvent, mockContext, mockCallback),
       ).rejects.toThrow(/Failed to process .* records/);
 
       // Verify Sentry captureException was called
@@ -250,7 +254,7 @@ describe('Sentry Integration', () => {
       // wrapHandler provides automatic flushing behavior
       // This is guaranteed by using AWSLambda.wrapHandler() which was already tested
       // in the "auto-wrap handler" test above
-      expect(handler).toBeDefined();
+      expect(s3Handler).toBeDefined();
     });
 
     it('should not block handler execution beyond flush timeout', () => {
