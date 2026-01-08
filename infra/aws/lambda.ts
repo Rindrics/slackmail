@@ -168,23 +168,30 @@ export const slackLambdaLogsPolicy = new aws.iam.RolePolicy(
 );
 
 // Policy: SES send email access for Slack Lambda
+// Allow sending from domain identity and any email address under that domain
 export const slackLambdaSesPolicy = new aws.iam.RolePolicy(
   'slack-lambda-ses-policy',
   {
     role: slackLambdaRole.id,
-    policy: pulumi.interpolate`{
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Effect": "Allow",
-        "Action": [
-          "ses:SendEmail",
-          "ses:SendRawEmail"
-        ],
-        "Resource": "${sesDomainIdentity.arn}"
-      }
-    ]
-  }`,
+    policy: pulumi
+      .all([sesDomainIdentity.arn, currentRegion, currentIdentity])
+      .apply(([domainArn, region, identity]) =>
+        JSON.stringify({
+          Version: '2012-10-17',
+          Statement: [
+            {
+              Effect: 'Allow',
+              Action: ['ses:SendEmail', 'ses:SendRawEmail'],
+              Resource: [
+                // Domain identity
+                domainArn,
+                // Email address identities under this domain
+                `arn:aws:ses:${region.name}:${identity.accountId}:identity/*`,
+              ],
+            },
+          ],
+        }),
+      ),
   },
 );
 
