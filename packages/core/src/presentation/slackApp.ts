@@ -1,11 +1,11 @@
 import { App, AwsLambdaReceiver } from '@slack/bolt';
 import type { Email } from '@/domain/entities';
-import type { MailRepository } from '@/domain/repositories';
 import { formatEmailForSlack } from './emailFormatter';
 import { generateEmailTemplate } from './emailTemplateGenerator';
 import { parseEmailTemplate } from './emailTemplateParser';
 import { fetchMessage } from './messageFetcher';
 import { parseMessageUrl } from './messageUrlParser';
+import type { SendMailUseCase } from '@/application/usecases/sendMailUseCase';
 
 export interface SlackAppConfig {
   signingSecret: string;
@@ -321,7 +321,7 @@ export function createEmailReceivedHandler(
  * Configuration for mail sending listeners
  */
 export interface MailSendingConfig {
-  mailRepository: MailRepository;
+  sendMailUseCase: SendMailUseCase;
   defaultSenderAddress: string;
 }
 
@@ -502,24 +502,19 @@ export function registerMailSendingListeners(
         body: string;
       };
 
-      // Create Email object
-      const email: Email = {
-        messageId: `<${Date.now()}@slackmail>`,
+      // Send via SendMailUseCase
+      const result = await config.sendMailUseCase.execute({
         from: emailData.from,
         to: emailData.to,
         subject: emailData.subject,
         body: {
           text: emailData.body,
         },
-        date: new Date(),
-      };
-
-      // Send via MailRepository
-      const messageId = await config.mailRepository.sendEmail(email);
+      });
 
       // Confirm success
       await respond({
-        text: `:white_check_mark: Email sent successfully! Message ID: ${messageId}`,
+        text: `:white_check_mark: Email sent successfully! Message ID: ${result.messageId}`,
         replace_original: false,
       });
     } catch (error) {
