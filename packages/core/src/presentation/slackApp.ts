@@ -495,17 +495,50 @@ export function registerMailSendingListeners(
         throw new Error('Missing email data in button action');
       }
 
-      const emailData = JSON.parse(action.value) as {
-        from: { name?: string; address: string };
-        to: Array<{ name?: string; address: string }>;
-        subject: string;
-        body: string;
+      // Parse JSON with explicit error handling
+      let emailData: {
+        from?: { name?: string; address?: string };
+        to?: Array<{ name?: string; address?: string }>;
+        subject?: string;
+        body?: string;
       };
+      try {
+        emailData = JSON.parse(action.value) as typeof emailData;
+      } catch {
+        throw new Error('Malformed email data in button action');
+      }
+
+      // Validate required fields
+      if (!emailData.from?.address) {
+        throw new Error('Missing required field: from.address');
+      }
+      if (!Array.isArray(emailData.to) || emailData.to.length === 0) {
+        throw new Error('Missing required field: to (must be non-empty array)');
+      }
+      if (!emailData.to.every((recipient) => recipient.address)) {
+        throw new Error('Invalid recipient: all to entries must have address');
+      }
+      if (!emailData.subject) {
+        throw new Error('Missing required field: subject');
+      }
+      if (!emailData.body) {
+        throw new Error('Missing required field: body');
+      }
+
+      // After validation, we know all required fields exist
+      const validatedFrom = {
+        name: emailData.from.name,
+        address: emailData.from.address,
+      };
+      const validatedTo = emailData.to.map((r) => ({
+        name: r.name,
+        address: r.address as string,
+      }));
 
       // Send via SendMailUseCase
       const result = await config.sendMailUseCase.execute({
-        from: emailData.from,
-        to: emailData.to,
+        from: validatedFrom,
+        to: validatedTo,
         subject: emailData.subject,
         body: {
           text: emailData.body,
