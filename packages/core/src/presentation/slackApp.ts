@@ -565,15 +565,34 @@ export function registerMailSendingListeners(
         },
       });
 
-      // Confirm success
+      // Replace original message with success confirmation (disable buttons)
       await respond({
-        text: `:white_check_mark: Email sent successfully! Message ID: ${result.messageId}`,
-        replace_original: false,
+        replace_original: true,
+        text: `Email sent successfully to ${validatedTo.map((r) => r.address).join(', ')}`,
+        blocks: [
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: `*:white_check_mark: Email Sent Successfully*\n\n*To:* ${validatedTo.map((r) => r.address).join(', ')}\n*From:* ${validatedFrom.address}\n*Subject:* ${emailData.subject}`,
+            },
+          },
+          {
+            type: 'context',
+            elements: [
+              {
+                type: 'mrkdwn',
+                text: `Message ID: \`${result.messageId}\``,
+              },
+            ],
+          },
+        ],
       });
     } catch (error) {
       console.error('Failed to send email:', error);
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
+      // Keep original message and add error (allow retry)
       await respond({
         text: `:x: Failed to send email: ${errorMessage}`,
         replace_original: false,
@@ -584,9 +603,19 @@ export function registerMailSendingListeners(
   // Handle "Cancel" button click
   app.action('send_email_cancel', async ({ ack, respond }) => {
     await ack();
+    // Replace original message to indicate cancellation
     await respond({
+      replace_original: true,
       text: 'Email send cancelled.',
-      replace_original: false,
+      blocks: [
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: '*:no_entry_sign: Email Send Cancelled*\n\nYou can generate a new template with `@bot template`.',
+          },
+        },
+      ],
     });
   });
 }
