@@ -386,122 +386,129 @@ export function registerMailSendingListeners(
     }
   });
 
-  // Handle "@bot <message_url>" - fetch, parse, confirm, and send email
+  // Handle "@bot <message_url>" or "<message_url> @bot" - fetch, parse, confirm, and send email
   // Slack mentions are formatted as <@USERID>, URLs are wrapped in <URL> or <URL|text>
-  app.message(
-    /<@[A-Z0-9]+>\s+<(https:\/\/[^|>\s]+\.slack\.com\/archives\/[A-Z0-9]+\/p\d+)/i,
-    async ({ message, say, client }) => {
-      console.log(
-        '[Bolt] Matched URL pattern, message:',
-        JSON.stringify(message, null, 2),
-      );
-      try {
-        // Slack wraps URLs in <URL> or <URL|display_text> format
-        const match = (message as { text?: string }).text?.match(
-          /<@[A-Z0-9]+>\s+<(https:\/\/[^|>\s]+\.slack\.com\/archives\/[A-Z0-9]+\/p\d+)/i,
-        );
+  // Match any message that contains both a bot mention and a Slack message URL
+  const slackMessageUrlPattern =
+    /<(https:\/\/[^|>\s]+\.slack\.com\/archives\/[A-Z0-9]+\/p\d+)/i;
 
-        if (!match || !match[1]) {
-          await say({
-            text: ':x: Could not find a valid Slack message URL. Please provide a URL in the format: `https://workspace.slack.com/archives/CHANNEL/pTIMESTAMP`',
-          });
-          return;
-        }
+  app.message(slackMessageUrlPattern, async ({ message, say, client }) => {
+    const text = (message as { text?: string }).text || '';
 
-        const messageUrl = match[1];
+    // Verify this message also mentions the bot (not just any URL)
+    if (!/<@[A-Z0-9]+>/i.test(text)) {
+      // URL without bot mention - ignore
+      return;
+    }
 
-        // Parse message URL
-        const { channelId, timestamp } = parseMessageUrl(messageUrl);
+    console.log(
+      '[Bolt] Matched URL pattern, message:',
+      JSON.stringify(message, null, 2),
+    );
+    try {
+      // Extract the Slack message URL
+      const match = text.match(slackMessageUrlPattern);
 
-        // Fetch the message content
-        const messageText = await fetchMessage(client, channelId, timestamp);
-
-        // Parse the email template
-        const emailData = parseEmailTemplate(messageText);
-
-        // Use default sender if not provided
-        const fromAddress = emailData.from ?? {
-          address: config.defaultSenderAddress,
-        };
-
-        // Show confirmation dialog
+      if (!match || !match[1]) {
         await say({
-          text: 'Email ready to send. Please confirm:',
-          blocks: [
-            {
-              type: 'section',
-              text: {
-                type: 'mrkdwn',
-                text: '*Email Preview*',
-              },
-            },
-            {
-              type: 'section',
-              fields: [
-                {
-                  type: 'mrkdwn',
-                  text: `*From:*\n${fromAddress.name ? `${fromAddress.name} ` : ''}<${fromAddress.address}>`,
-                },
-                {
-                  type: 'mrkdwn',
-                  text: `*To:*\n${emailData.to.map((addr) => (addr.name ? `${addr.name} <${addr.address}>` : addr.address)).join('\n')}`,
-                },
-              ],
-            },
-            {
-              type: 'section',
-              text: {
-                type: 'mrkdwn',
-                text: `*Subject:*\n${emailData.subject}`,
-              },
-            },
-            {
-              type: 'section',
-              text: {
-                type: 'mrkdwn',
-                text: `*Body:*\n\`\`\`\n${emailData.body.substring(0, 500)}${emailData.body.length > 500 ? '...' : ''}\n\`\`\``,
-              },
-            },
-            {
-              type: 'actions',
-              elements: [
-                {
-                  type: 'button',
-                  text: {
-                    type: 'plain_text',
-                    text: 'Send Email',
-                  },
-                  style: 'primary',
-                  action_id: 'send_email_confirm',
-                  value: JSON.stringify({
-                    from: fromAddress,
-                    to: emailData.to,
-                    subject: emailData.subject,
-                    body: emailData.body,
-                  }),
-                },
-                {
-                  type: 'button',
-                  text: {
-                    type: 'plain_text',
-                    text: 'Cancel',
-                  },
-                  action_id: 'send_email_cancel',
-                },
-              ],
-            },
-          ],
+          text: ':x: Could not find a valid Slack message URL. Please provide a URL in the format: `https://workspace.slack.com/archives/CHANNEL/pTIMESTAMP`',
         });
-      } catch (error) {
-        console.error('Failed to process email send request:', error);
-        const errorMessage =
-          error instanceof Error ? error.message : 'Unknown error';
-        await say({
-          text: `:x: Failed to process email send request: ${errorMessage}`,
-        });
+        return;
       }
-    },
-  );
+
+      const messageUrl = match[1];
+
+      // Parse message URL
+      const { channelId, timestamp } = parseMessageUrl(messageUrl);
+
+      // Fetch the message content
+      const messageText = await fetchMessage(client, channelId, timestamp);
+
+      // Parse the email template
+      const emailData = parseEmailTemplate(messageText);
+
+      // Use default sender if not provided
+      const fromAddress = emailData.from ?? {
+        address: config.defaultSenderAddress,
+      };
+
+      // Show confirmation dialog
+      await say({
+        text: 'Email ready to send. Please confirm:',
+        blocks: [
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: '*Email Preview*',
+            },
+          },
+          {
+            type: 'section',
+            fields: [
+              {
+                type: 'mrkdwn',
+                text: `*From:*\n${fromAddress.name ? `${fromAddress.name} ` : ''}<${fromAddress.address}>`,
+              },
+              {
+                type: 'mrkdwn',
+                text: `*To:*\n${emailData.to.map((addr) => (addr.name ? `${addr.name} <${addr.address}>` : addr.address)).join('\n')}`,
+              },
+            ],
+          },
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: `*Subject:*\n${emailData.subject}`,
+            },
+          },
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: `*Body:*\n\`\`\`\n${emailData.body.substring(0, 500)}${emailData.body.length > 500 ? '...' : ''}\n\`\`\``,
+            },
+          },
+          {
+            type: 'actions',
+            elements: [
+              {
+                type: 'button',
+                text: {
+                  type: 'plain_text',
+                  text: 'Send Email',
+                },
+                style: 'primary',
+                action_id: 'send_email_confirm',
+                value: JSON.stringify({
+                  from: fromAddress,
+                  to: emailData.to,
+                  subject: emailData.subject,
+                  body: emailData.body,
+                }),
+              },
+              {
+                type: 'button',
+                text: {
+                  type: 'plain_text',
+                  text: 'Cancel',
+                },
+                action_id: 'send_email_cancel',
+              },
+            ],
+          },
+        ],
+      });
+    } catch (error) {
+      console.error('Failed to process email send request:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      await say({
+        text: `:x: Failed to process email send request: ${errorMessage}`,
+      });
+    }
+  });
 
   // Handle "Send Email" button click
   app.action('send_email_confirm', async ({ ack, body, respond }) => {
