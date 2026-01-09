@@ -6,6 +6,11 @@ import { generateEmailTemplate } from './emailTemplateGenerator';
 import { parseEmailTemplate } from './emailTemplateParser';
 import { fetchMessage } from './messageFetcher';
 import { parseMessageUrl } from './messageUrlParser';
+import {
+  extractSlackMessageUrl,
+  hasBotMention,
+  isTemplateRequest,
+} from './slackMessageTextParser';
 
 export interface SlackAppConfig {
   signingSecret: string;
@@ -342,8 +347,14 @@ export function registerMailSendingListeners(
   });
 
   // Handle "@bot template" - generate and post email template
-  // Slack mentions are formatted as <@USERID>, not @username
-  app.message(/<@[A-Z0-9]+>\s+template/i, async ({ message, say }) => {
+  app.message(async ({ message, say, next }) => {
+    const text = (message as { text?: string }).text || '';
+
+    if (!isTemplateRequest(text)) {
+      await next();
+      return;
+    }
+
     console.log(
       '[Bolt] Matched template pattern, message:',
       JSON.stringify(message, null, 2),
@@ -387,17 +398,24 @@ export function registerMailSendingListeners(
   });
 
   // Handle "@bot <message_url>" or "<message_url> @bot" - fetch, parse, confirm, and send email
-  // Slack mentions are formatted as <@USERID>, URLs are wrapped in <URL> or <URL|text>
-  // Match any message that contains both a bot mention and a Slack message URL
-  const slackMessageUrlPattern =
-    /<(https:\/\/[^|>\s]+\.slack\.com\/archives\/[A-Z0-9]+\/p\d+)/i;
-
-  app.message(slackMessageUrlPattern, async ({ message, say, client }) => {
+  app.message(async ({ message, say, client, next }) => {
     const text = (message as { text?: string }).text || '';
 
-    // Verify this message also mentions the bot (not just any URL)
-    if (!/<@[A-Z0-9]+>/i.test(text)) {
-      // URL without bot mention - ignore
+    // Check if this is an email send request (bot mention + message URL)
+    if (!hasBotMention(text)) {
+      await next();
+      return;
+    }
+
+    const messageUrl = extractSlackMessageUrl(text);
+    if (!messageUrl) {
+      // Bot mention without URL - let other handlers process it
+      await next();
+      return;
+    }
+
+    // Skip if this is a template request (handled by previous listener)
+    if (isTemplateRequest(text)) {
       return;
     }
 
@@ -406,18 +424,6 @@ export function registerMailSendingListeners(
       JSON.stringify(message, null, 2),
     );
     try {
-      // Extract the Slack message URL
-      const match = text.match(slackMessageUrlPattern);
-
-      if (!match || !match[1]) {
-        await say({
-          text: ':x: Could not find a valid Slack message URL. Please provide a URL in the format: `https://workspace.slack.com/archives/CHANNEL/pTIMESTAMP`',
-        });
-        return;
-      }
-
-      const messageUrl = match[1];
-
       // Parse message URL
       const { channelId, timestamp } = parseMessageUrl(messageUrl);
 
