@@ -1,5 +1,26 @@
 # Changelog
 
+## [v0.1.5](https://github.com/Rindrics/slackmail/compare/v0.1.4...v0.1.5) - 2026-01-09
+- Setup Sentry for production by @Rindrics in https://github.com/Rindrics/slackmail/pull/64
+- Handle Slack error to know what occurs by @Rindrics in https://github.com/Rindrics/slackmail/pull/66
+- feat: post long text as file by @Rindrics in https://github.com/Rindrics/slackmail/pull/71
+- feat: post file as thread by @Rindrics in https://github.com/Rindrics/slackmail/pull/72
+- feat: provide mail sending functionality by @Rindrics in https://github.com/Rindrics/slackmail/pull/74
+- fix: correct mention parsing by @Rindrics in https://github.com/Rindrics/slackmail/pull/75
+- build: improve git hooks by @Rindrics in https://github.com/Rindrics/slackmail/pull/77
+- feat: handle Slack event to send mail by @Rindrics in https://github.com/Rindrics/slackmail/pull/76
+- chore: add logs by @Rindrics in https://github.com/Rindrics/slackmail/pull/78
+- chore: add logging by @Rindrics in https://github.com/Rindrics/slackmail/pull/79
+- fix: correct URL match pattern by @Rindrics in https://github.com/Rindrics/slackmail/pull/80
+- fix: parse <mailto:> format addres by @Rindrics in https://github.com/Rindrics/slackmail/pull/81
+- fix: allow sendMail permission by @Rindrics in https://github.com/Rindrics/slackmail/pull/82
+- feat: avoid repeated sending by @Rindrics in https://github.com/Rindrics/slackmail/pull/83
+- feat: configure MAIL FROM by @Rindrics in https://github.com/Rindrics/slackmail/pull/84
+- Bump @aws-sdk/client-s3 from 3.956.0 to 3.962.0 by @dependabot[bot] in https://github.com/Rindrics/slackmail/pull/68
+- Bump @pulumi/pulumi from 3.213.0 to 3.214.1 by @dependabot[bot] in https://github.com/Rindrics/slackmail/pull/70
+- Bump @biomejs/biome from 2.3.10 to 2.3.11 by @dependabot[bot] in https://github.com/Rindrics/slackmail/pull/69
+- feat: allow bot mention after message URL by @Rindrics in https://github.com/Rindrics/slackmail/pull/85
+
 ## [v0.1.5](https://github.com/Rindrics/slackmail/compare/v0.1.4...v0.1.5) - 2026-01-06
 - Setup Sentry for production by @Rindrics in https://github.com/Rindrics/slackmail/pull/64
 - Handle Slack error to know what occurs by @Rindrics in https://github.com/Rindrics/slackmail/pull/66
