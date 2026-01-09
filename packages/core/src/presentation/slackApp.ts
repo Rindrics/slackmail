@@ -555,6 +555,21 @@ export function registerMailSendingListeners(
         address: r.address as string,
       }));
 
+      // Immediately replace the original message to prevent resending
+      await respond({
+        replace_original: true,
+        text: 'Sending email...',
+        blocks: [
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: ':hourglass_flowing_sand: Sending email...',
+            },
+          },
+        ],
+      });
+
       // Send via SendMailUseCase
       const result = await config.sendMailUseCase.execute({
         from: validatedFrom,
@@ -565,15 +580,33 @@ export function registerMailSendingListeners(
         },
       });
 
-      // Confirm success
+      // Update the message with success confirmation
       await respond({
-        text: `:white_check_mark: Email sent successfully! Message ID: ${result.messageId}`,
-        replace_original: false,
+        text: `Email sent successfully to ${validatedTo.map((r) => r.address).join(', ')}`,
+        blocks: [
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: `*:white_check_mark: Email Sent Successfully*\n\n*To:* ${validatedTo.map((r) => r.address).join(', ')}\n*From:* ${validatedFrom.address}\n*Subject:* ${emailData.subject}`,
+            },
+          },
+          {
+            type: 'context',
+            elements: [
+              {
+                type: 'mrkdwn',
+                text: `Message ID: \`${result.messageId}\``,
+              },
+            ],
+          },
+        ],
       });
     } catch (error) {
       console.error('Failed to send email:', error);
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
+      // Keep original message and add error (allow retry)
       await respond({
         text: `:x: Failed to send email: ${errorMessage}`,
         replace_original: false,
@@ -584,9 +617,19 @@ export function registerMailSendingListeners(
   // Handle "Cancel" button click
   app.action('send_email_cancel', async ({ ack, respond }) => {
     await ack();
+    // Replace original message to indicate cancellation
     await respond({
+      replace_original: true,
       text: 'Email send cancelled.',
-      replace_original: false,
+      blocks: [
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: '*:no_entry_sign: Email Send Cancelled*\n\nYou can generate a new template with `@bot template`.',
+          },
+        },
+      ],
     });
   });
 }
