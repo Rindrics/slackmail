@@ -66,6 +66,41 @@ export const spfRecord = new aws.route53.Record('spf-record', {
 });
 
 // =============================================================================
+// Custom MAIL FROM Domain
+// This hides amazonses.com in email headers (mailed-by field)
+// =============================================================================
+
+const mailFromSubdomain = `mail.${emailDomain}`;
+
+export const sesMailFrom = new aws.ses.MailFrom('ses-mail-from', {
+  domain: sesDomainIdentity.domain,
+  mailFromDomain: mailFromSubdomain,
+});
+
+// MX record for MAIL FROM subdomain (required for bounce handling)
+export const mailFromMxRecord = new aws.route53.Record('mail-from-mx-record', {
+  zoneId: route53ZoneId,
+  name: mailFromSubdomain,
+  type: 'MX',
+  ttl: 600,
+  records: pulumi
+    .output(currentRegion)
+    .apply((region) => [`10 feedback-smtp.${region.name}.amazonses.com`]),
+});
+
+// SPF record for MAIL FROM subdomain
+export const mailFromSpfRecord = new aws.route53.Record(
+  'mail-from-spf-record',
+  {
+    zoneId: route53ZoneId,
+    name: mailFromSubdomain,
+    type: 'TXT',
+    ttl: 600,
+    records: ['v=spf1 include:amazonses.com ~all'],
+  },
+);
+
+// =============================================================================
 // DKIM Configuration
 // =============================================================================
 
