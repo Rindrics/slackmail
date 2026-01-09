@@ -21,9 +21,12 @@ export interface ParsedSlackMessageText {
  * Examples:
  * - <https://workspace.slack.com/archives/C123/p456>
  * - <https://workspace.slack.com/archives/C123/p456|View message>
+ *
+ * Note: Workspace names contain only alphanumeric characters and hyphens.
+ * Using a specific character class prevents ReDoS vulnerabilities.
  */
 const SLACK_MESSAGE_URL_PATTERN =
-  /<(https:\/\/[^|>\s]+\.slack\.com\/archives\/[A-Z0-9]+\/p\d+)/i;
+  /<(https:\/\/[a-z0-9-]+\.slack\.com\/archives\/[A-Z0-9]+\/p\d+)/i;
 
 /**
  * Pattern to match bot mentions in Slack format.
