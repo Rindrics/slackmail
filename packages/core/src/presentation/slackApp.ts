@@ -555,6 +555,21 @@ export function registerMailSendingListeners(
         address: r.address as string,
       }));
 
+      // Immediately replace the original message to prevent resending
+      await respond({
+        replace_original: true,
+        text: 'Sending email...',
+        blocks: [
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: ':hourglass_flowing_sand: Sending email...',
+            },
+          },
+        ],
+      });
+
       // Send via SendMailUseCase
       const result = await config.sendMailUseCase.execute({
         from: validatedFrom,
@@ -565,9 +580,8 @@ export function registerMailSendingListeners(
         },
       });
 
-      // Replace original message with success confirmation (disable buttons)
+      // Update the message with success confirmation
       await respond({
-        replace_original: true,
         text: `Email sent successfully to ${validatedTo.map((r) => r.address).join(', ')}`,
         blocks: [
           {
