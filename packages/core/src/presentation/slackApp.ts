@@ -1,6 +1,7 @@
 import { App, AwsLambdaReceiver } from '@slack/bolt';
 import type { SendMailUseCase } from '@/application/usecases/sendMailUseCase';
 import type { Email } from '@/domain/entities';
+import type { TenantConfigRepository } from '@/domain/repositories/tenantConfigRepository';
 import { formatEmailForSlack } from './emailFormatter';
 import { generateEmailTemplate } from './emailTemplateGenerator';
 import { parseEmailTemplate } from './emailTemplateParser';
@@ -327,7 +328,7 @@ export function createEmailReceivedHandler(
  */
 export interface MailSendingConfig {
   sendMailUseCase: SendMailUseCase;
-  defaultSenderAddress: string;
+  tenantConfigRepository: TenantConfigRepository;
 }
 
 /**
@@ -433,10 +434,13 @@ export function registerMailSendingListeners(
       // Parse the email template
       const emailData = parseEmailTemplate(messageText);
 
-      // Use default sender if not provided
-      const fromAddress = emailData.from ?? {
-        address: config.defaultSenderAddress,
-      };
+      // Get from address (required for display)
+      const fromAddress = emailData.from;
+      if (!fromAddress || !fromAddress.address) {
+        throw new Error(
+          'From address is required. Please specify a sender in the template.',
+        );
+      }
 
       // Show confirmation dialog
       await say({
@@ -454,7 +458,7 @@ export function registerMailSendingListeners(
             fields: [
               {
                 type: 'mrkdwn',
-                text: `*From:*\n${fromAddress.name ? `${fromAddress.name} ` : ''}<${fromAddress.address}>`,
+                text: `*From:*\n${(fromAddress.name ?? '') ? `${fromAddress.name} ` : ''}<${fromAddress.address}>`,
               },
               {
                 type: 'mrkdwn',
@@ -521,9 +525,30 @@ export function registerMailSendingListeners(
     await ack();
 
     try {
+      // Extract Slack context from the body
+      const slackBody = body as {
+        team?: { id?: string };
+        channel?: { id?: string };
+        user?: { id?: string };
+        actions?: Array<{ value?: string }>;
+      };
+
+      const slackTeamId = slackBody.team?.id;
+      const slackChannelId = slackBody.channel?.id;
+      const slackUserId = slackBody.user?.id;
+
+      if (!slackTeamId) {
+        throw new Error('Missing Slack team ID');
+      }
+      if (!slackChannelId) {
+        throw new Error('Missing Slack channel ID');
+      }
+      if (!slackUserId) {
+        throw new Error('Missing Slack user ID');
+      }
+
       // Parse email data from button value
-      const action = (body as { actions?: Array<{ value?: string }> })
-        .actions?.[0];
+      const action = slackBody.actions?.[0];
       if (!action?.value) {
         throw new Error('Missing email data in button action');
       }
@@ -583,15 +608,22 @@ export function registerMailSendingListeners(
         ],
       });
 
-      // Send via SendMailUseCase
-      const result = await config.sendMailUseCase.execute({
-        from: validatedFrom,
-        to: validatedTo,
-        subject: emailData.subject,
-        body: {
-          text: emailData.body,
+      // Send via SendMailUseCase with multi-tenant context
+      const result = await config.sendMailUseCase.execute(
+        {
+          from: validatedFrom,
+          to: validatedTo,
+          subject: emailData.subject,
+          body: {
+            text: emailData.body,
+          },
         },
-      });
+        {
+          slackTeamId,
+          slackChannelId,
+          slackUserId,
+        },
+      );
 
       // Update the message with success confirmation
       await respond({
