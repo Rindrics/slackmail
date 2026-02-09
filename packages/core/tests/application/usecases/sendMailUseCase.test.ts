@@ -17,7 +17,8 @@ describe('SendMailUseCase', () => {
     teamId: 'T12345',
     teamName: 'Test Workspace',
     botUserId: 'U12345',
-    botToken: 'xoxb-test',
+    botTokenSecretArn:
+      'arn:aws:secretsmanager:us-east-1:123456789012:secret:slackmail/tenant/T12345/bot-token',
     plan: 'pro',
     status: 'active',
     installedAt: new Date(),
@@ -416,6 +417,27 @@ describe('SendMailUseCase', () => {
       await useCase.execute(inputWithOnlyText, validContext);
 
       expect(mockMailRepository.sendEmail).toHaveBeenCalledOnce();
+    });
+
+    it('should handle saveEmailLog errors gracefully', async () => {
+      // Mock saveEmailLog to reject
+      const saveError = new Error('Failed to save email log to DynamoDB');
+      vi.mocked(mockTenantConfigRepository.saveEmailLog).mockRejectedValueOnce(
+        saveError,
+      );
+
+      // Execute should still succeed and return messageId
+      const result = await useCase.execute(validInput, validContext);
+
+      // Verify email was still sent
+      expect(mockMailRepository.sendEmail).toHaveBeenCalledOnce();
+      expect(result.messageId).toBeDefined();
+
+      // Verify saveEmailLog was attempted
+      expect(mockTenantConfigRepository.saveEmailLog).toHaveBeenCalledOnce();
+
+      // The error should be logged but not re-thrown
+      // (In a real test, you might spy on console.error)
     });
   });
 });
