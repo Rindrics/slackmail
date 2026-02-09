@@ -1,6 +1,10 @@
 /**
  * TenantConfig represents the configuration for a Slack workspace (tenant)
  * and its associated email domains.
+ *
+ * ⚠️ Security Note: botTokenSecretArn is stored only as a reference to AWS Secrets Manager.
+ * The actual bot token is never stored in DynamoDB. Always fetch the token from Secrets Manager
+ * at runtime using the ARN.
  */
 export interface TenantConfig {
   // Tenant identification
@@ -8,8 +12,8 @@ export interface TenantConfig {
   teamName: string;
   botUserId: string;
 
-  // Slack bot credentials
-  botToken: string;
+  // Slack bot credentials (stored in AWS Secrets Manager)
+  botTokenSecretArn: string;
 
   // Tenant status and plan
   plan: 'free' | 'pro' | 'enterprise';

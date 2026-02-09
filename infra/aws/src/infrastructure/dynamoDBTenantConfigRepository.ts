@@ -178,11 +178,13 @@ export class DynamoDBTenantConfigRepository implements TenantConfigRepository {
 
   async saveTenantConfig(tenantConfig: TenantConfig): Promise<void> {
     try {
+      // Store tenant config in DynamoDB
+      // Note: botToken is stored only by reference (ARN) to AWS Secrets Manager
       const item = {
         team_id: tenantConfig.teamId,
         team_name: tenantConfig.teamName,
         bot_user_id: tenantConfig.botUserId,
-        bot_token: tenantConfig.botToken,
+        bot_token_secret_arn: tenantConfig.botTokenSecretArn,
         plan: tenantConfig.plan,
         status: tenantConfig.status,
         installed_at: tenantConfig.installedAt.toISOString(),
@@ -269,7 +271,7 @@ export class DynamoDBTenantConfigRepository implements TenantConfigRepository {
       'team_id',
       'team_name',
       'bot_user_id',
-      'bot_token',
+      'bot_token_secret_arn',
       'plan',
       'status',
       'installed_at',
@@ -294,7 +296,7 @@ export class DynamoDBTenantConfigRepository implements TenantConfigRepository {
       teamId: String(data.team_id),
       teamName: String(data.team_name),
       botUserId: String(data.bot_user_id),
-      botToken: String(data.bot_token),
+      botTokenSecretArn: String(data.bot_token_secret_arn),
       plan: String(data.plan) as TenantConfig['plan'],
       status: String(data.status) as TenantConfig['status'],
       installedAt: installedAtDate,
