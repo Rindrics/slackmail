@@ -88,5 +88,6 @@ export interface EmailLog {
   sentAt: Date;
 
   // TTL for automatic deletion (in Unix timestamp seconds)
-  ttl?: number;
+  // Required: ensures records are automatically cleaned up from DynamoDB
+  ttl: number;
 }

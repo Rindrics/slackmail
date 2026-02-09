@@ -148,7 +148,12 @@ export class DynamoDBTenantConfigRepository implements TenantConfigRepository {
 
   async saveEmailLog(emailLog: EmailLog): Promise<void> {
     try {
-      const ttl = emailLog.ttl ?? this.calculateTTL(90); // Default 90 days
+      // Validate TTL is a positive number
+      if (!Number.isInteger(emailLog.ttl) || emailLog.ttl <= 0) {
+        throw new Error(
+          `Invalid EmailLog: ttl must be a positive integer (Unix timestamp seconds)`,
+        );
+      }
 
       const item = {
         message_id: emailLog.messageId,
@@ -160,7 +165,7 @@ export class DynamoDBTenantConfigRepository implements TenantConfigRepository {
         subject: emailLog.subject,
         status: emailLog.status,
         sent_at: emailLog.sentAt.toISOString(),
-        ttl,
+        ttl: emailLog.ttl,
       };
 
       const command = new PutItemCommand({
@@ -402,9 +407,4 @@ export class DynamoDBTenantConfigRepository implements TenantConfigRepository {
   /**
    * Calculate TTL value (Unix timestamp) for given days from now
    */
-  private calculateTTL(days: number): number {
-    const expirationDate = new Date();
-    expirationDate.setDate(expirationDate.getDate() + days);
-    return Math.floor(expirationDate.getTime() / 1000);
-  }
 }

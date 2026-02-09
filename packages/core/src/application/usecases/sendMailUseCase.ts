@@ -123,7 +123,9 @@ export class SendMailUseCase {
     // Send via repository
     const messageId = await this.mailRepository.sendEmail(email, sendContext);
 
-    // Log the email send
+    // Log the email send (with 90-day TTL)
+    const ttlDate = new Date();
+    ttlDate.setDate(ttlDate.getDate() + 90);
     const emailLog = {
       messageId,
       teamId: context.slackTeamId,
@@ -134,6 +136,7 @@ export class SendMailUseCase {
       subject: input.subject,
       status: 'sent' as const,
       sentAt: new Date(),
+      ttl: Math.floor(ttlDate.getTime() / 1000),
     };
     await this.tenantConfigRepository.saveEmailLog(emailLog);
 
