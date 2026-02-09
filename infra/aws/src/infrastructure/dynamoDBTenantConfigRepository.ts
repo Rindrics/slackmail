@@ -1,4 +1,5 @@
 import {
+  type AttributeValue,
   DynamoDBClient,
   GetItemCommand,
   PutItemCommand,
@@ -84,7 +85,7 @@ export class DynamoDBTenantConfigRepository implements TenantConfigRepository {
         return [];
       }
 
-      return response.Items.map((item) => {
+      return response.Items.map((item: Record<string, AttributeValue>) => {
         const unmarshalled = unmarshall(item) as unknown;
         return this.mapToDomain(unmarshalled);
       });
