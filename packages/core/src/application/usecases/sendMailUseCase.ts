@@ -138,7 +138,18 @@ export class SendMailUseCase {
       sentAt: new Date(),
       ttl: Math.floor(ttlDate.getTime() / 1000),
     };
-    await this.tenantConfigRepository.saveEmailLog(emailLog);
+
+    // Attempt to log, but don't fail if it fails (logging is non-critical)
+    try {
+      await this.tenantConfigRepository.saveEmailLog(emailLog);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      console.error(
+        `Failed to save email log for message ${messageId}: ${errorMessage}`,
+      );
+      // Continue - sending email was successful, logging failure is non-critical
+    }
 
     return { messageId };
   }
