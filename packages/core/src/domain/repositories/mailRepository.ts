@@ -1,4 +1,5 @@
 import type { Email } from '../entities/email';
+import type { SendContext } from '../entities/sendContext';
 
 /**
  * Repository interface for sending emails via mail service (e.g., SES).
@@ -12,20 +13,24 @@ export interface MailRepository {
    * Send an email via the configured mail service.
    *
    * @param email - The email to send
+   * @param context - SendContext containing tenant and domain information
    * @returns Message ID from the mail service
    * @throws {Error} If sending fails (e.g., invalid sender, rate limit, service error)
    *
    * @example
    * ```typescript
-   * const messageId = await mailRepository.sendEmail({
-   *   messageId: generateMessageId(),
-   *   from: { address: 'sender@example.com' },
-   *   to: [{ address: 'recipient@example.com' }],
-   *   subject: 'Hello',
-   *   body: { text: 'Hello, world!' },
-   *   date: new Date(),
-   * });
+   * const messageId = await mailRepository.sendEmail(
+   *   {
+   *     messageId: generateMessageId(),
+   *     from: { address: 'sender@example.com' },
+   *     to: [{ address: 'recipient@example.com' }],
+   *     subject: 'Hello',
+   *     body: { text: 'Hello, world!' },
+   *     date: new Date(),
+   *   },
+   *   context,
+   * );
    * ```
    */
-  sendEmail(email: Email): Promise<string>;
+  sendEmail(email: Email, context: SendContext): Promise<string>;
 }
