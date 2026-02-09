@@ -82,9 +82,11 @@ export class SendMailUseCase {
       );
     }
 
-    // Select domain (either specified or first available)
-    let selectedDomain = domains[0];
+    // Select domain (either specified or first verified domain)
+    let selectedDomain: (typeof domains)[0];
+
     if (context.selectedDomainId) {
+      // Use explicitly selected domain
       const found = domains.find(
         (d) => d.domainId === context.selectedDomainId,
       );
@@ -93,7 +95,29 @@ export class SendMailUseCase {
           `Domain ${context.selectedDomainId} not found for team ${context.slackTeamId}`,
         );
       }
+      // Verify selected domain is verified
+      if (found.verificationStatus !== 'verified') {
+        throw new Error(
+          `Domain ${found.domain} (${context.selectedDomainId}) is not verified. Status: ${found.verificationStatus}. Please verify the domain before sending.`,
+        );
+      }
       selectedDomain = found;
+    } else {
+      // Use first verified domain, fall back to any domain with clear error
+      const verifiedDomains = domains.filter(
+        (d) => d.verificationStatus === 'verified',
+      );
+      if (verifiedDomains.length > 0) {
+        selectedDomain = verifiedDomains[0];
+      } else {
+        // All domains unverified
+        const statuses = domains
+          .map((d) => `${d.domain} (${d.verificationStatus})`)
+          .join(', ');
+        throw new Error(
+          `No verified domains available for team ${context.slackTeamId}. Domains: ${statuses}. Please verify at least one domain before sending.`,
+        );
+      }
     }
 
     // Create Email entity

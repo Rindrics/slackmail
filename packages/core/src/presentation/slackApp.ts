@@ -442,6 +442,41 @@ export function registerMailSendingListeners(
         );
       }
 
+      // Validate sender domain is configured for this tenant
+      const slackTeamId = (message as { team?: string }).team;
+      if (!slackTeamId) {
+        throw new Error('Could not determine Slack team ID');
+      }
+
+      const tenantConfig =
+        await config.tenantConfigRepository.getTenantConfig(slackTeamId);
+      if (!tenantConfig) {
+        throw new Error(
+          `Tenant configuration not found for team ${slackTeamId}`,
+        );
+      }
+
+      const allowedDomains =
+        await config.tenantConfigRepository.getDomainsByTeamId(slackTeamId);
+      const verifiedDomains = allowedDomains.filter(
+        (d) => d.verificationStatus === 'verified',
+      );
+
+      if (verifiedDomains.length === 0) {
+        throw new Error(
+          'No verified domains configured. Please set up at least one verified domain before sending emails.',
+        );
+      }
+
+      const senderDomain = fromAddress.address.split('@')[1];
+      const allowedDomainList = verifiedDomains.map((d) => d.domain).join(', ');
+
+      if (!verifiedDomains.some((d) => d.domain === senderDomain)) {
+        throw new Error(
+          `Sender domain @${senderDomain} is not verified. Allowed verified domains: ${allowedDomainList}`,
+        );
+      }
+
       // Show confirmation dialog
       await say({
         text: 'Email ready to send. Please confirm:',
