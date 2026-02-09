@@ -77,17 +77,18 @@ describe('DynamoDBTenantConfigRepository', () => {
 
   describe('getTenantConfig', () => {
     it('should return tenant config when found', async () => {
-      const mockResponse: GetCommandOutput = {
+      const mockResponse = {
         Item: {
-          team_id: 'T12345',
-          team_name: 'Test Team',
-          bot_user_id: 'U12345',
-          bot_token_secret_arn:
-            'arn:aws:secretsmanager:us-east-1:123456789012:secret:test',
-          plan: 'pro',
-          status: 'active',
-          installed_at: '2025-02-07T00:00:00Z',
-          installed_by: 'U00001',
+          team_id: { S: 'T12345' },
+          team_name: { S: 'Test Team' },
+          bot_user_id: { S: 'U12345' },
+          bot_token_secret_arn: {
+            S: 'arn:aws:secretsmanager:us-east-1:123456789012:secret:test',
+          },
+          plan: { S: 'pro' },
+          status: { S: 'active' },
+          installed_at: { S: '2025-02-07T00:00:00Z' },
+          installed_by: { S: 'U00001' },
         },
         $metadata: {},
       };
@@ -114,13 +115,12 @@ describe('DynamoDBTenantConfigRepository', () => {
     });
 
     it('should throw error with descriptive message on missing required fields', async () => {
-      const mockResponse: GetCommandOutput = {
+      const mockResponse = {
         Item: {
-          team_id: 'T12345',
-          // Missing required fields
-          team_name: undefined,
-          bot_user_id: 'U12345',
-          bot_token_secret_arn: 'arn:...',
+          team_id: { S: 'T12345' },
+          // Missing required fields - team_name is missing
+          bot_user_id: { S: 'U12345' },
+          bot_token_secret_arn: { S: 'arn:...' },
         },
         $metadata: {},
       };
@@ -135,17 +135,17 @@ describe('DynamoDBTenantConfigRepository', () => {
 
   describe('getDomainsByTeamId', () => {
     it('should return domains for team', async () => {
-      const mockResponse: QueryCommandOutput = {
+      const mockResponse = {
         Items: [
           {
-            domain_id: 'domain-1',
-            team_id: 'T12345',
-            domain: 'example.com',
-            verification_status: 'verified',
-            dkim_status: 'verified',
-            mail_from_status: 'verified',
-            default_sender: 'noreply@example.com',
-            created_at: '2025-02-07T00:00:00Z',
+            domain_id: { S: 'domain-1' },
+            team_id: { S: 'T12345' },
+            domain: { S: 'example.com' },
+            verification_status: { S: 'verified' },
+            dkim_status: { S: 'verified' },
+            mail_from_status: { S: 'verified' },
+            default_sender: { S: 'noreply@example.com' },
+            created_at: { S: '2025-02-07T00:00:00Z' },
           },
         ],
         $metadata: {},
@@ -244,14 +244,14 @@ describe('DynamoDBTenantConfigRepository', () => {
 
   describe('getChannelConfig', () => {
     it('should return channel config when found', async () => {
-      const mockResponse: GetCommandOutput = {
+      const mockResponse = {
         Item: {
-          team_id: 'T12345',
-          channel_id: 'C12345',
-          domain_id: 'domain-1',
-          enabled: true,
-          created_at: '2025-02-07T00:00:00Z',
-          updated_at: '2025-02-07T00:00:00Z',
+          team_id: { S: 'T12345' },
+          channel_id: { S: 'C12345' },
+          domain_id: { S: 'domain-1' },
+          enabled: { BOOL: true },
+          created_at: { S: '2025-02-07T00:00:00Z' },
+          updated_at: { S: '2025-02-07T00:00:00Z' },
         },
         $metadata: {},
       };
