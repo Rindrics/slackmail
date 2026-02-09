@@ -264,6 +264,32 @@ export class DynamoDBTenantConfigRepository implements TenantConfigRepository {
   private mapToTenantConfig(item: unknown): TenantConfig {
     const data = item as Record<string, unknown>;
 
+    // Validate required fields
+    const requiredFields = [
+      'team_id',
+      'team_name',
+      'bot_user_id',
+      'bot_token',
+      'plan',
+      'status',
+      'installed_at',
+      'installed_by',
+    ];
+
+    for (const field of requiredFields) {
+      if (data[field] === undefined || data[field] === null) {
+        throw new Error(
+          `Invalid TenantConfig: missing required field "${field}"`,
+        );
+      }
+    }
+
+    // Validate and parse date
+    const installedAtDate = new Date(String(data.installed_at));
+    if (isNaN(installedAtDate.getTime())) {
+      throw new Error(`Invalid TenantConfig: installed_at is not a valid date`);
+    }
+
     return {
       teamId: String(data.team_id),
       teamName: String(data.team_name),
@@ -271,7 +297,7 @@ export class DynamoDBTenantConfigRepository implements TenantConfigRepository {
       botToken: String(data.bot_token),
       plan: String(data.plan) as TenantConfig['plan'],
       status: String(data.status) as TenantConfig['status'],
-      installedAt: new Date(String(data.installed_at)),
+      installedAt: installedAtDate,
       installedBy: String(data.installed_by),
       stripeCustomerId: data.stripe_customer_id
         ? String(data.stripe_customer_id)
@@ -284,6 +310,30 @@ export class DynamoDBTenantConfigRepository implements TenantConfigRepository {
    */
   private mapToDomain(item: unknown): Domain {
     const data = item as Record<string, unknown>;
+
+    // Validate required fields
+    const requiredFields = [
+      'domain_id',
+      'team_id',
+      'domain',
+      'verification_status',
+      'dkim_status',
+      'mail_from_status',
+      'default_sender',
+      'created_at',
+    ];
+
+    for (const field of requiredFields) {
+      if (data[field] === undefined || data[field] === null) {
+        throw new Error(`Invalid Domain: missing required field "${field}"`);
+      }
+    }
+
+    // Validate and parse date
+    const createdAtDate = new Date(String(data.created_at));
+    if (isNaN(createdAtDate.getTime())) {
+      throw new Error(`Invalid Domain: created_at is not a valid date`);
+    }
 
     return {
       domainId: String(data.domain_id),
@@ -298,7 +348,7 @@ export class DynamoDBTenantConfigRepository implements TenantConfigRepository {
       dkimStatus: String(data.dkim_status) as Domain['dkimStatus'],
       mailFromStatus: String(data.mail_from_status) as Domain['mailFromStatus'],
       defaultSender: String(data.default_sender),
-      createdAt: new Date(String(data.created_at)),
+      createdAt: createdAtDate,
     };
   }
 
@@ -308,13 +358,42 @@ export class DynamoDBTenantConfigRepository implements TenantConfigRepository {
   private mapToChannelConfig(item: unknown): ChannelConfig {
     const data = item as Record<string, unknown>;
 
+    // Validate required fields
+    const requiredFields = [
+      'team_id',
+      'channel_id',
+      'domain_id',
+      'enabled',
+      'created_at',
+      'updated_at',
+    ];
+
+    for (const field of requiredFields) {
+      if (data[field] === undefined || data[field] === null) {
+        throw new Error(
+          `Invalid ChannelConfig: missing required field "${field}"`,
+        );
+      }
+    }
+
+    // Validate and parse dates
+    const createdAtDate = new Date(String(data.created_at));
+    if (isNaN(createdAtDate.getTime())) {
+      throw new Error(`Invalid ChannelConfig: created_at is not a valid date`);
+    }
+
+    const updatedAtDate = new Date(String(data.updated_at));
+    if (isNaN(updatedAtDate.getTime())) {
+      throw new Error(`Invalid ChannelConfig: updated_at is not a valid date`);
+    }
+
     return {
       teamId: String(data.team_id),
       channelId: String(data.channel_id),
       domainId: String(data.domain_id),
       enabled: Boolean(data.enabled),
-      createdAt: new Date(String(data.created_at)),
-      updatedAt: new Date(String(data.updated_at)),
+      createdAt: createdAtDate,
+      updatedAt: updatedAtDate,
     };
   }
 
