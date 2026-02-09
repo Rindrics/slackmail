@@ -1,2 +1,14 @@
+#!/usr/bin/env sh
+
+echo "🔍 Running pre-commit checks..."
+
+# Run lint-staged
 pnpm lint-staged
+
+if [ $? -ne 0 ]; then
+  echo "❌ Pre-commit checks failed. Commit aborted."
+  exit 1
+fi
+
+echo "✅ Pre-commit checks passed"
 
