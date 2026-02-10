@@ -15,6 +15,13 @@ on:
       - 'infra/aws/**'
       - 'packages/core/**'
       - '.github/workflows/deploy.yml'
+  pull_request_target:
+    branches:
+      - main
+    paths:
+      - 'infra/aws/**'
+      - 'packages/core/**'
+      - '.github/workflows/deploy.yml'
 
 env:
   PULUMI_STACK_NAME: slackmail
@@ -26,11 +33,56 @@ permissions:
   contents: read
 
 jobs:
-  preview:
-    if: github.event_name == 'pull_request'
+  preview-dependabot:
+    environment: preview
+    if: github.actor == 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref }}
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.node-version'
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm run build && pnpm --filter slackmail-aws build:lambda
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: pulumi/actions@v6
+        with:
+          command: preview
+          stack-name: rindrics/${{ env.PULUMI_STACK_NAME }}/${{ env.PULUMI_STACK_PROJECT_NAME}}
+          work-dir: infra/aws
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          EMAIL_DOMAIN: ${{ vars.EMAIL_DOMAIN }}
+          ROUTE53_ZONE_ID: ${{ secrets.ROUTE53_ZONE_ID }}
+          SLACK_SIGNING_SECRET: ${{ secrets.SLACK_SIGNING_SECRET }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_ID: ${{ vars.SLACK_CHANNEL_ID }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+
+  preview-human:
+    if: github.actor != 'dependabot[bot]' && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref }}
 
       - uses: pnpm/action-setup@v4
         with:
