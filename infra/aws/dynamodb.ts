@@ -23,8 +23,8 @@ import { tags } from './config';
  * Attributes:
  * - team_id: Slack Team ID
  * - team_name: Workspace name
- * - bot_token: Slack Bot Token (encrypted at rest)
  * - bot_user_id: Bot User ID
+ * - bot_token_secret_arn: AWS Secrets Manager secret reference for Slack Bot Token
  * - installed_at: ISO8601 timestamp
  * - installed_by: Slack User ID of installer
  * - plan: free | pro | enterprise
