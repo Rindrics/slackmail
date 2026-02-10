@@ -51,6 +51,9 @@ importers:
       '@aws-sdk/client-dynamodb':
         specifier: ^3.985.0
         version: 3.985.0
+      '@aws-sdk/lib-dynamodb':
+        specifier: ^3.985.0
+        version: 3.986.0(@aws-sdk/client-dynamodb@3.985.0)
       '@aws-sdk/util-dynamodb':
         specifier: ^3.985.0
         version: 3.985.0(@aws-sdk/client-dynamodb@3.985.0)
@@ -279,6 +282,12 @@ packages:
     resolution: {integrity: sha512-3L7mwqSLJ6ouZZKtCntoNF0HTYDNs1FDQqkGjoPWXcv1p0gnLotaDmLq1rIDqfu4ucOit0Re3ioLyYDUTpSroA==}
     engines: {node: '>=20.0.0'}
 
+  '@aws-sdk/lib-dynamodb@3.986.0':
+    resolution: {integrity: sha512-1FNV5/hl45Ao4tW+SOU5Gymyb3x9e+xdYXRHSyXvjKBF0WsFqWBnMIhGFFDum0Uv9tdte3hR8U07oU3gDgSJIw==}
+    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      '@aws-sdk/client-dynamodb': ^3.986.0
+
   '@aws-sdk/middleware-bucket-endpoint@3.965.0':
     resolution: {integrity: sha512-gbdv3Dl8l8xmg4oH60fXvfDyTxfx28w5/Hxdymx3vurM07tAyd4qld8zEXejnSpraTo45QcHRtk5auELIMfeag==}
     engines: {node: '>=18.0.0'}
@@ -428,6 +437,12 @@ packages:
     engines: {node: '>=20.0.0'}
     peerDependencies:
       '@aws-sdk/client-dynamodb': ^3.985.0
+
+  '@aws-sdk/util-dynamodb@3.986.0':
+    resolution: {integrity: sha512-BSDdaOm2r9fDR6N1SpZTgEkJ86/wzQcnHHgISF50hXxApilRKBXZ+5siOr9yEiYcEXr3tDng7XUeny1pV3axlA==}
+    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      '@aws-sdk/client-dynamodb': ^3.986.0
 
   '@aws-sdk/util-endpoints@3.957.0':
     resolution: {integrity: sha512-xwF9K24mZSxcxKS3UKQFeX/dPYkEps9wF1b+MGON7EvnbcucrJGyQyK1v1xFPn1aqXkBTFi+SZaMRx5E5YCVFw==}
@@ -3994,6 +4009,16 @@ snapshots:
       mnemonist: 0.38.3
       tslib: 2.8.1
 
+  '@aws-sdk/lib-dynamodb@3.986.0(@aws-sdk/client-dynamodb@3.985.0)':
+    dependencies:
+      '@aws-sdk/client-dynamodb': 3.985.0
+      '@aws-sdk/core': 3.973.7
+      '@aws-sdk/util-dynamodb': 3.986.0(@aws-sdk/client-dynamodb@3.985.0)
+      '@smithy/core': 3.22.1
+      '@smithy/smithy-client': 4.11.2
+      '@smithy/types': 4.12.0
+      tslib: 2.8.1
+
   '@aws-sdk/middleware-bucket-endpoint@3.965.0':
     dependencies:
       '@aws-sdk/types': 3.965.0
@@ -4407,6 +4432,11 @@ snapshots:
       tslib: 2.8.1
 
   '@aws-sdk/util-dynamodb@3.985.0(@aws-sdk/client-dynamodb@3.985.0)':
+    dependencies:
+      '@aws-sdk/client-dynamodb': 3.985.0
+      tslib: 2.8.1
+
+  '@aws-sdk/util-dynamodb@3.986.0(@aws-sdk/client-dynamodb@3.985.0)':
     dependencies:
       '@aws-sdk/client-dynamodb': 3.985.0
       tslib: 2.8.1
