@@ -1,27 +1,11 @@
-name: Deploy
+name: Preview
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'infra/aws/**'
-      - 'packages/core/**'
-      - '.github/workflows/deploy.yml'
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'infra/aws/**'
-      - 'packages/core/**'
-      - '.github/workflows/deploy.yml'
-  pull_request_target:
-    branches:
-      - main
-    paths:
-      - 'infra/aws/**'
-      - 'packages/core/**'
-      - '.github/workflows/deploy.yml'
+  workflow_call:
+    inputs:
+      ref:
+        required: true
+        type: string
 
 env:
   PULUMI_STACK_NAME: slackmail
@@ -33,26 +17,12 @@ permissions:
   contents: read
 
 jobs:
-  preview-dependabot:
-    environment: preview
-    if: github.actor == 'dependabot[bot]'
-    uses: ./.github/workflows/preview.yml
-    with:
-      ref: ${{ github.head_ref }}
-    secrets: inherit
-
-  preview-human:
-    if: github.actor != 'dependabot[bot]' && github.event_name == 'pull_request'
-    uses: ./.github/workflows/preview.yml
-    with:
-      ref: ${{ github.ref }}
-    secrets: inherit
-
-  deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  preview:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref }}
 
       - uses: pnpm/action-setup@v4
         with:
@@ -76,7 +46,7 @@ jobs:
 
       - uses: pulumi/actions@v6
         with:
-          command: up
+          command: preview
           stack-name: rindrics/${{ env.PULUMI_STACK_NAME }}/${{ env.PULUMI_STACK_PROJECT_NAME}}
           work-dir: infra/aws
         env:
