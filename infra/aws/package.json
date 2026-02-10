@@ -22,6 +22,7 @@
   },
   "devDependencies": {
     "@aws-sdk/client-dynamodb": "^3.985.0",
+    "@aws-sdk/lib-dynamodb": "^3.985.0",
     "@aws-sdk/util-dynamodb": "^3.985.0",
     "@pulumi/aws": "^7.15.0",
     "@pulumi/pulumi": "^3.215.0",
