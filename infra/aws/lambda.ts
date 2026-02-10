@@ -9,6 +9,12 @@ import {
   stackName,
   tags,
 } from './config';
+import {
+  channelConfigsTable,
+  domainsTable,
+  emailLogsTable,
+  tenantsTable,
+} from './dynamodb';
 import { emailBucket } from './s3';
 import { sesDomainIdentity } from './ses';
 
@@ -195,6 +201,44 @@ export const slackLambdaSesPolicy = new aws.iam.RolePolicy(
   },
 );
 
+// Policy: DynamoDB access for Slack Lambda (multi-tenant configuration)
+// Allow reading tenant, domain, and channel config, and writing email logs
+export const slackLambdaDynamoDBPolicy = new aws.iam.RolePolicy(
+  'slack-lambda-dynamodb-policy',
+  {
+    role: slackLambdaRole.id,
+    policy: pulumi
+      .all([
+        tenantsTable.arn,
+        domainsTable.arn,
+        channelConfigsTable.arn,
+        emailLogsTable.arn,
+      ])
+      .apply(([tenantsArn, domainsArn, channelConfigsArn, emailLogsArn]) =>
+        JSON.stringify({
+          Version: '2012-10-17',
+          Statement: [
+            {
+              Effect: 'Allow',
+              Action: ['dynamodb:GetItem', 'dynamodb:Query'],
+              Resource: [
+                tenantsArn,
+                domainsArn,
+                channelConfigsArn,
+                `${domainsArn}/index/team_id-index`,
+              ],
+            },
+            {
+              Effect: 'Allow',
+              Action: ['dynamodb:PutItem'],
+              Resource: [emailLogsArn],
+            },
+          ],
+        }),
+      ),
+  },
+);
+
 // Slack Lambda function (API Gateway / Slack events)
 export const slackLambda = new aws.lambda.Function('slack-lambda', {
   name: slackLambdaName,
@@ -213,6 +257,11 @@ export const slackLambda = new aws.lambda.Function('slack-lambda', {
       SLACK_SIGNING_SECRET: slackSigningSecret,
       SLACK_BOT_TOKEN: slackBotToken,
       SLACK_CHANNEL_ID: slackChannelId,
+      // Multi-tenant DynamoDB tables
+      TENANTS_TABLE_NAME: tenantsTable.name,
+      DOMAINS_TABLE_NAME: domainsTable.name,
+      CHANNEL_CONFIGS_TABLE_NAME: channelConfigsTable.name,
+      EMAIL_LOGS_TABLE_NAME: emailLogsTable.name,
     },
   },
   tags,

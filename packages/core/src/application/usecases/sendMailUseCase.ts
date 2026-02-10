@@ -1,5 +1,7 @@
 import type { Email, EmailAddress } from '@/domain/entities/email';
+import type { SendContext } from '@/domain/entities/sendContext';
 import type { MailRepository } from '@/domain/repositories/mailRepository';
+import type { TenantConfigRepository } from '@/domain/repositories/tenantConfigRepository';
 
 /**
  * Input data for sending an email
@@ -20,6 +22,16 @@ export interface SendMailInput {
 }
 
 /**
+ * Context for sending an email from Slack
+ */
+export interface SendMailContext {
+  slackTeamId: string;
+  slackChannelId: string;
+  slackUserId: string;
+  selectedDomainId?: string; // Optional: if user selected a specific domain
+}
+
+/**
  * Output data after sending an email
  */
 export interface SendMailOutput {
@@ -27,21 +39,86 @@ export interface SendMailOutput {
 }
 
 /**
- * Use case for sending emails
+ * Use case for sending emails with multi-tenant support
  */
 export class SendMailUseCase {
-  constructor(private readonly mailRepository: MailRepository) {}
+  constructor(
+    private readonly mailRepository: MailRepository,
+    private readonly tenantConfigRepository: TenantConfigRepository,
+  ) {}
 
   /**
    * Execute the send mail use case
    *
    * @param input - Email data to send
+   * @param context - Slack context and tenant information
    * @returns Message ID from the mail service
-   * @throws {Error} If validation fails or sending fails
+   * @throws {Error} If validation fails, tenant config not found, or sending fails
    */
-  async execute(input: SendMailInput): Promise<SendMailOutput> {
+  async execute(
+    input: SendMailInput,
+    context: SendMailContext,
+  ): Promise<SendMailOutput> {
     // Validate input
     this.validate(input);
+
+    // Get tenant configuration
+    const tenantConfig = await this.tenantConfigRepository.getTenantConfig(
+      context.slackTeamId,
+    );
+    if (!tenantConfig) {
+      throw new Error(
+        `Tenant configuration not found for team ${context.slackTeamId}`,
+      );
+    }
+
+    // Get domains for tenant
+    const domains = await this.tenantConfigRepository.getDomainsByTeamId(
+      context.slackTeamId,
+    );
+    if (domains.length === 0) {
+      throw new Error(
+        `No email domains configured for team ${context.slackTeamId}`,
+      );
+    }
+
+    // Select domain (either specified or first verified domain)
+    let selectedDomain: (typeof domains)[0];
+
+    if (context.selectedDomainId) {
+      // Use explicitly selected domain
+      const found = domains.find(
+        (d) => d.domainId === context.selectedDomainId,
+      );
+      if (!found) {
+        throw new Error(
+          `Domain ${context.selectedDomainId} not found for team ${context.slackTeamId}`,
+        );
+      }
+      // Verify selected domain is verified
+      if (found.verificationStatus !== 'verified') {
+        throw new Error(
+          `Domain ${found.domain} (${context.selectedDomainId}) is not verified. Status: ${found.verificationStatus}. Please verify the domain before sending.`,
+        );
+      }
+      selectedDomain = found;
+    } else {
+      // Use first verified domain, fall back to any domain with clear error
+      const verifiedDomains = domains.filter(
+        (d) => d.verificationStatus === 'verified',
+      );
+      if (verifiedDomains.length > 0) {
+        selectedDomain = verifiedDomains[0];
+      } else {
+        // All domains unverified
+        const statuses = domains
+          .map((d) => `${d.domain} (${d.verificationStatus})`)
+          .join(', ');
+        throw new Error(
+          `No verified domains available for team ${context.slackTeamId}. Domains: ${statuses}. Please verify at least one domain before sending.`,
+        );
+      }
+    }
 
     // Create Email entity
     const email: Email = {
@@ -58,8 +135,45 @@ export class SendMailUseCase {
       references: input.references,
     };
 
+    // Build SendContext
+    const sendContext: SendContext = {
+      tenantConfig,
+      domain: selectedDomain,
+      slackTeamId: context.slackTeamId,
+      slackChannelId: context.slackChannelId,
+      slackUserId: context.slackUserId,
+    };
+
     // Send via repository
-    const messageId = await this.mailRepository.sendEmail(email);
+    const messageId = await this.mailRepository.sendEmail(email, sendContext);
+
+    // Log the email send (with 90-day TTL)
+    const ttlDate = new Date();
+    ttlDate.setDate(ttlDate.getDate() + 90);
+    const emailLog = {
+      messageId,
+      teamId: context.slackTeamId,
+      channelId: context.slackChannelId,
+      userId: context.slackUserId,
+      fromAddress: input.from.address,
+      toAddresses: input.to.map((addr) => addr.address),
+      subject: input.subject,
+      status: 'sent' as const,
+      sentAt: new Date(),
+      ttl: Math.floor(ttlDate.getTime() / 1000),
+    };
+
+    // Attempt to log, but don't fail if it fails (logging is non-critical)
+    try {
+      await this.tenantConfigRepository.saveEmailLog(emailLog);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      console.error(
+        `Failed to save email log for message ${messageId}: ${errorMessage}`,
+      );
+      // Continue - sending email was successful, logging failure is non-critical
+    }
 
     return { messageId };
   }
