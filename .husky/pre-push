@@ -1,1 +1,31 @@
+#!/usr/bin/env sh
+
+echo "🚀 Running pre-push validation..."
+
+# Run build
+echo "📦 Building..."
 pnpm run build
+
+if [ $? -ne 0 ]; then
+  echo "❌ Build failed. Push aborted."
+  echo "   Fix the build errors and try again:"
+  echo "   $ pnpm run build"
+  exit 1
+fi
+
+echo "✅ Build successful"
+
+# Run linting and type checking
+echo "🔍 Running code quality checks..."
+pnpm run check
+
+if [ $? -ne 0 ]; then
+  echo "❌ Code quality checks failed. Push aborted."
+  echo "   Fix the issues and try again:"
+  echo "   $ pnpm run fix"
+  exit 1
+fi
+
+echo "✅ Code quality checks passed"
+echo "✨ All pre-push checks passed! Ready to push."
+
