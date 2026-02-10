@@ -1,11 +1,5 @@
 import { stage } from './apigateway';
 import { emailDomain, projectName, stackName } from './config';
-import {
-  channelConfigsTable,
-  domainsTable,
-  emailLogsTable,
-  tenantsTable,
-} from './dynamodb';
 import { s3Lambda, s3LambdaRole, slackLambda, slackLambdaRole } from './lambda';
 import { emailBucket } from './s3';
 import { sesDomainIdentity } from './ses';
@@ -29,12 +23,6 @@ export const s3LambdaRoleArn = s3LambdaRole.arn;
 export const slackLambdaFunctionName = slackLambda.name;
 export const slackLambdaFunctionArn = slackLambda.arn;
 export const slackLambdaRoleArn = slackLambdaRole.arn;
-
-// DynamoDB tables (multi-tenant)
-export const tenantsTableName = tenantsTable.name;
-export const domainsTableName = domainsTable.name;
-export const channelConfigsTableName = channelConfigsTable.name;
-export const emailLogsTableName = emailLogsTable.name;
 
 export const apiEndpoint = stage.invokeUrl;
 export const sesEmailDomain = emailDomain;
