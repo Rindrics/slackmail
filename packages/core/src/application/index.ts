@@ -6,7 +6,6 @@ export {
 } from './receiveMailUseCase';
 
 export {
-  type SendMailContext,
   type SendMailInput,
   type SendMailOutput,
   SendMailUseCase,

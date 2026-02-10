@@ -9,10 +9,7 @@ import type {
   Callback,
   Context,
 } from 'aws-lambda';
-import {
-  DynamoDBTenantConfigRepository,
-  SESMailRepository,
-} from '@/infrastructure/index';
+import { SESMailRepository } from '@/infrastructure/sesMailRepository';
 
 /**
  * Required environment variables configuration for Slack handler
@@ -21,10 +18,8 @@ interface EnvConfig {
   slackSigningSecret: string;
   slackBotToken: string;
   slackChannelId: string;
-  tenantsTableName: string;
-  domainsTableName: string;
-  channelConfigsTableName: string;
-  emailLogsTableName: string;
+  emailDomain: string;
+  defaultSenderAddress: string;
 }
 
 /**
@@ -35,22 +30,21 @@ function loadEnvConfig(): EnvConfig {
   const slackSigningSecret = process.env.SLACK_SIGNING_SECRET?.trim();
   const slackBotToken = process.env.SLACK_BOT_TOKEN?.trim();
   const slackChannelId = process.env.SLACK_CHANNEL_ID?.trim();
-  const tenantsTableName = process.env.TENANTS_TABLE_NAME?.trim();
-  const domainsTableName = process.env.DOMAINS_TABLE_NAME?.trim();
-  const channelConfigsTableName =
-    process.env.CHANNEL_CONFIGS_TABLE_NAME?.trim();
-  const emailLogsTableName = process.env.EMAIL_LOGS_TABLE_NAME?.trim();
+  const emailDomain = process.env.EMAIL_DOMAIN?.trim();
 
-  const missing = [];
-  if (!slackSigningSecret) missing.push('SLACK_SIGNING_SECRET');
-  if (!slackBotToken) missing.push('SLACK_BOT_TOKEN');
-  if (!slackChannelId) missing.push('SLACK_CHANNEL_ID');
-  if (!tenantsTableName) missing.push('TENANTS_TABLE_NAME');
-  if (!domainsTableName) missing.push('DOMAINS_TABLE_NAME');
-  if (!channelConfigsTableName) missing.push('CHANNEL_CONFIGS_TABLE_NAME');
-  if (!emailLogsTableName) missing.push('EMAIL_LOGS_TABLE_NAME');
+  if (
+    !slackSigningSecret ||
+    !slackBotToken ||
+    !slackChannelId ||
+    !emailDomain
+  ) {
+    const missing = [
+      !slackSigningSecret && 'SLACK_SIGNING_SECRET',
+      !slackBotToken && 'SLACK_BOT_TOKEN',
+      !slackChannelId && 'SLACK_CHANNEL_ID',
+      !emailDomain && 'EMAIL_DOMAIN',
+    ].filter(Boolean);
 
-  if (missing.length > 0) {
     for (const name of missing) {
       console.error(`[Config Error] ${name} is required but not set`);
     }
@@ -60,13 +54,11 @@ function loadEnvConfig(): EnvConfig {
   }
 
   return {
-    slackSigningSecret: slackSigningSecret as string,
-    slackBotToken: slackBotToken as string,
-    slackChannelId: slackChannelId as string,
-    tenantsTableName: tenantsTableName as string,
-    domainsTableName: domainsTableName as string,
-    channelConfigsTableName: channelConfigsTableName as string,
-    emailLogsTableName: emailLogsTableName as string,
+    slackSigningSecret,
+    slackBotToken,
+    slackChannelId,
+    emailDomain,
+    defaultSenderAddress: `noreply@${emailDomain}`,
   };
 }
 
@@ -80,26 +72,18 @@ const { app, receiver } = createSlackApp({
   channel: config.slackChannelId,
 });
 
-// Initialize multi-tenant repositories
-const tenantConfigRepository = new DynamoDBTenantConfigRepository({
-  tenantsTableName: config.tenantsTableName,
-  domainsTableName: config.domainsTableName,
-  channelConfigsTableName: config.channelConfigsTableName,
-  emailLogsTableName: config.emailLogsTableName,
+// Initialize mail sending dependencies
+const mailRepository = new SESMailRepository({
+  allowedSenderDomain: config.emailDomain,
+  defaultSenderAddress: config.defaultSenderAddress,
 });
 
-// Initialize mail sending dependencies
-const mailRepository = new SESMailRepository();
-
-const sendMailUseCase = new SendMailUseCase(
-  mailRepository,
-  tenantConfigRepository,
-);
+const sendMailUseCase = new SendMailUseCase(mailRepository);
 
 // Register mail sending listeners (template and send commands)
 registerMailSendingListeners(app, {
   sendMailUseCase,
-  tenantConfigRepository,
+  defaultSenderAddress: config.defaultSenderAddress,
 });
 
 /**

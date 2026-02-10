@@ -1,40 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  type SendMailContext,
   type SendMailInput,
   SendMailUseCase,
 } from '@/application/usecases/sendMailUseCase';
-import type { Domain, TenantConfig } from '@/domain/entities';
 import type { MailRepository } from '@/domain/repositories/mailRepository';
-import type { TenantConfigRepository } from '@/domain/repositories/tenantConfigRepository';
 
 describe('SendMailUseCase', () => {
   let useCase: SendMailUseCase;
-  let mockMailRepository: MailRepository;
-  let mockTenantConfigRepository: TenantConfigRepository;
-
-  const mockTenantConfig: TenantConfig = {
-    teamId: 'T12345',
-    teamName: 'Test Workspace',
-    botUserId: 'U12345',
-    botTokenSecretArn:
-      'arn:aws:secretsmanager:us-east-1:123456789012:secret:slackmail/tenant/T12345/bot-token',
-    plan: 'pro',
-    status: 'active',
-    installedAt: new Date(),
-    installedBy: 'U00001',
-  };
-
-  const mockDomain: Domain = {
-    domainId: 'domain-1',
-    teamId: 'T12345',
-    domain: 'example.com',
-    verificationStatus: 'verified',
-    dkimStatus: 'verified',
-    mailFromStatus: 'verified',
-    defaultSender: 'noreply@example.com',
-    createdAt: new Date(),
-  };
+  let mockRepository: MailRepository;
 
   const validInput: SendMailInput = {
     from: { address: 'sender@example.com', name: 'Sender' },
@@ -45,171 +18,42 @@ describe('SendMailUseCase', () => {
     },
   };
 
-  const validContext: SendMailContext = {
-    slackTeamId: 'T12345',
-    slackChannelId: 'C12345',
-    slackUserId: 'U12345',
-  };
-
   beforeEach(() => {
-    mockMailRepository = {
+    mockRepository = {
       sendEmail: vi.fn().mockResolvedValue('test-message-id-12345'),
     };
-
-    mockTenantConfigRepository = {
-      getTenantConfig: vi.fn().mockResolvedValue(mockTenantConfig),
-      getDomainsByTeamId: vi.fn().mockResolvedValue([mockDomain]),
-      getDomainById: vi.fn().mockResolvedValue(mockDomain),
-      getChannelConfig: vi.fn().mockResolvedValue(null),
-      saveEmailLog: vi.fn().mockResolvedValue(undefined),
-      saveTenantConfig: vi.fn().mockResolvedValue(undefined),
-      saveDomain: vi.fn().mockResolvedValue(undefined),
-      saveChannelConfig: vi.fn().mockResolvedValue(undefined),
-    };
-
-    useCase = new SendMailUseCase(
-      mockMailRepository,
-      mockTenantConfigRepository,
-    );
+    useCase = new SendMailUseCase(mockRepository);
   });
 
   describe('execute', () => {
     it('should send email successfully', async () => {
-      const result = await useCase.execute(validInput, validContext);
+      const result = await useCase.execute(validInput);
 
       expect(result.messageId).toBe('test-message-id-12345');
-      expect(mockMailRepository.sendEmail).toHaveBeenCalledOnce();
-      expect(mockMailRepository.sendEmail).toHaveBeenCalledWith(
+      expect(mockRepository.sendEmail).toHaveBeenCalledOnce();
+      expect(mockRepository.sendEmail).toHaveBeenCalledWith(
         expect.objectContaining({
           from: validInput.from,
           to: validInput.to,
           subject: validInput.subject,
           body: validInput.body,
         }),
-        expect.objectContaining({
-          tenantConfig: mockTenantConfig,
-          domain: mockDomain,
-          slackTeamId: validContext.slackTeamId,
-          slackChannelId: validContext.slackChannelId,
-          slackUserId: validContext.slackUserId,
-        }),
-      );
-    });
-
-    it('should load tenant config from repository', async () => {
-      await useCase.execute(validInput, validContext);
-
-      expect(mockTenantConfigRepository.getTenantConfig).toHaveBeenCalledWith(
-        'T12345',
-      );
-    });
-
-    it('should throw error if tenant config not found', async () => {
-      vi.mocked(mockTenantConfigRepository.getTenantConfig).mockResolvedValue(
-        null,
-      );
-
-      await expect(useCase.execute(validInput, validContext)).rejects.toThrow(
-        'Tenant configuration not found',
-      );
-    });
-
-    it('should throw error if no domains configured for tenant', async () => {
-      vi.mocked(
-        mockTenantConfigRepository.getDomainsByTeamId,
-      ).mockResolvedValue([]);
-
-      await expect(useCase.execute(validInput, validContext)).rejects.toThrow(
-        'No email domains configured',
-      );
-    });
-
-    it('should throw error if selected domain not found', async () => {
-      const contextWithDomainId: SendMailContext = {
-        ...validContext,
-        selectedDomainId: 'non-existent-domain',
-      };
-
-      await expect(
-        useCase.execute(validInput, contextWithDomainId),
-      ).rejects.toThrow('Domain non-existent-domain not found');
-    });
-
-    it('should use selected domain if specified', async () => {
-      const domain2: Domain = {
-        ...mockDomain,
-        domainId: 'domain-2',
-        domain: 'other.com',
-      };
-
-      vi.mocked(
-        mockTenantConfigRepository.getDomainsByTeamId,
-      ).mockResolvedValue([mockDomain, domain2]);
-
-      const contextWithDomainId: SendMailContext = {
-        ...validContext,
-        selectedDomainId: 'domain-2',
-      };
-
-      await useCase.execute(validInput, contextWithDomainId);
-
-      expect(mockMailRepository.sendEmail).toHaveBeenCalledWith(
-        expect.any(Object),
-        expect.objectContaining({
-          domain: domain2,
-        }),
-      );
-    });
-
-    it('should use first domain if not specified', async () => {
-      const domain2: Domain = {
-        ...mockDomain,
-        domainId: 'domain-2',
-      };
-
-      vi.mocked(
-        mockTenantConfigRepository.getDomainsByTeamId,
-      ).mockResolvedValue([mockDomain, domain2]);
-
-      await useCase.execute(validInput, validContext);
-
-      expect(mockMailRepository.sendEmail).toHaveBeenCalledWith(
-        expect.any(Object),
-        expect.objectContaining({
-          domain: mockDomain,
-        }),
-      );
-    });
-
-    it('should log email send', async () => {
-      await useCase.execute(validInput, validContext);
-
-      expect(mockTenantConfigRepository.saveEmailLog).toHaveBeenCalledWith(
-        expect.objectContaining({
-          teamId: 'T12345',
-          channelId: 'C12345',
-          userId: 'U12345',
-          fromAddress: 'sender@example.com',
-          toAddresses: ['recipient@example.com'],
-          subject: 'Test Email',
-          status: 'sent',
-        }),
       );
     });
 
     it('should generate message ID in RFC 5322 format', async () => {
-      await useCase.execute(validInput, validContext);
+      await useCase.execute(validInput);
 
-      const call = vi.mocked(mockMailRepository.sendEmail).mock.calls[0][0];
+      const call = vi.mocked(mockRepository.sendEmail).mock.calls[0][0];
       expect(call.messageId).toMatch(/^<\d+\.[a-z0-9]+@slackmail>$/);
     });
 
     it('should set current date', async () => {
       const beforeExecution = new Date();
-      await useCase.execute(validInput, validContext);
+      await useCase.execute(validInput);
       const afterExecution = new Date();
 
-      const call = vi.mocked(mockMailRepository.sendEmail).mock.calls[0][0];
+      const call = vi.mocked(mockRepository.sendEmail).mock.calls[0][0];
       expect(call.date.getTime()).toBeGreaterThanOrEqual(
         beforeExecution.getTime(),
       );
@@ -222,9 +66,9 @@ describe('SendMailUseCase', () => {
         cc: [{ address: 'cc@example.com' }],
       };
 
-      await useCase.execute(inputWithCc, validContext);
+      await useCase.execute(inputWithCc);
 
-      const call = vi.mocked(mockMailRepository.sendEmail).mock.calls[0][0];
+      const call = vi.mocked(mockRepository.sendEmail).mock.calls[0][0];
       expect(call.cc).toEqual([{ address: 'cc@example.com' }]);
     });
 
@@ -234,9 +78,9 @@ describe('SendMailUseCase', () => {
         bcc: [{ address: 'bcc@example.com' }],
       };
 
-      await useCase.execute(inputWithBcc, validContext);
+      await useCase.execute(inputWithBcc);
 
-      const call = vi.mocked(mockMailRepository.sendEmail).mock.calls[0][0];
+      const call = vi.mocked(mockRepository.sendEmail).mock.calls[0][0];
       expect(call.bcc).toEqual([{ address: 'bcc@example.com' }]);
     });
 
@@ -246,9 +90,9 @@ describe('SendMailUseCase', () => {
         replyTo: { address: 'replyto@example.com' },
       };
 
-      await useCase.execute(inputWithReplyTo, validContext);
+      await useCase.execute(inputWithReplyTo);
 
-      const call = vi.mocked(mockMailRepository.sendEmail).mock.calls[0][0];
+      const call = vi.mocked(mockRepository.sendEmail).mock.calls[0][0];
       expect(call.replyTo).toEqual({ address: 'replyto@example.com' });
     });
 
@@ -259,9 +103,9 @@ describe('SendMailUseCase', () => {
         references: ['<ref1@example.com>', '<ref2@example.com>'],
       };
 
-      await useCase.execute(inputWithThreading, validContext);
+      await useCase.execute(inputWithThreading);
 
-      const call = vi.mocked(mockMailRepository.sendEmail).mock.calls[0][0];
+      const call = vi.mocked(mockRepository.sendEmail).mock.calls[0][0];
       expect(call.inReplyTo).toBe('<original@example.com>');
       expect(call.references).toEqual([
         '<ref1@example.com>',
@@ -278,19 +122,19 @@ describe('SendMailUseCase', () => {
         },
       };
 
-      await useCase.execute(inputWithHtml, validContext);
+      await useCase.execute(inputWithHtml);
 
-      const call = vi.mocked(mockMailRepository.sendEmail).mock.calls[0][0];
+      const call = vi.mocked(mockRepository.sendEmail).mock.calls[0][0];
       expect(call.body.text).toBe('Plain text');
       expect(call.body.html).toBe('<p>HTML content</p>');
     });
 
     it('should propagate repository errors', async () => {
-      vi.mocked(mockMailRepository.sendEmail).mockRejectedValue(
+      vi.mocked(mockRepository.sendEmail).mockRejectedValue(
         new Error('SES rate limit exceeded'),
       );
 
-      await expect(useCase.execute(validInput, validContext)).rejects.toThrow(
+      await expect(useCase.execute(validInput)).rejects.toThrow(
         'SES rate limit exceeded',
       );
     });
@@ -303,10 +147,10 @@ describe('SendMailUseCase', () => {
         from: { address: '' },
       };
 
-      await expect(useCase.execute(invalidInput, validContext)).rejects.toThrow(
+      await expect(useCase.execute(invalidInput)).rejects.toThrow(
         'From address is required',
       );
-      expect(mockMailRepository.sendEmail).not.toHaveBeenCalled();
+      expect(mockRepository.sendEmail).not.toHaveBeenCalled();
     });
 
     it('should throw error if to addresses are empty', async () => {
@@ -315,10 +159,10 @@ describe('SendMailUseCase', () => {
         to: [],
       };
 
-      await expect(useCase.execute(invalidInput, validContext)).rejects.toThrow(
+      await expect(useCase.execute(invalidInput)).rejects.toThrow(
         'At least one To address is required',
       );
-      expect(mockMailRepository.sendEmail).not.toHaveBeenCalled();
+      expect(mockRepository.sendEmail).not.toHaveBeenCalled();
     });
 
     it('should throw error if to address is invalid', async () => {
@@ -327,10 +171,10 @@ describe('SendMailUseCase', () => {
         to: [{ address: '' }],
       };
 
-      await expect(useCase.execute(invalidInput, validContext)).rejects.toThrow(
+      await expect(useCase.execute(invalidInput)).rejects.toThrow(
         'Invalid To address',
       );
-      expect(mockMailRepository.sendEmail).not.toHaveBeenCalled();
+      expect(mockRepository.sendEmail).not.toHaveBeenCalled();
     });
 
     it('should throw error if CC address is invalid', async () => {
@@ -339,10 +183,10 @@ describe('SendMailUseCase', () => {
         cc: [{ address: '' }],
       };
 
-      await expect(useCase.execute(invalidInput, validContext)).rejects.toThrow(
+      await expect(useCase.execute(invalidInput)).rejects.toThrow(
         'Invalid CC address',
       );
-      expect(mockMailRepository.sendEmail).not.toHaveBeenCalled();
+      expect(mockRepository.sendEmail).not.toHaveBeenCalled();
     });
 
     it('should throw error if BCC address is invalid', async () => {
@@ -351,10 +195,10 @@ describe('SendMailUseCase', () => {
         bcc: [{ address: '' }],
       };
 
-      await expect(useCase.execute(invalidInput, validContext)).rejects.toThrow(
+      await expect(useCase.execute(invalidInput)).rejects.toThrow(
         'Invalid BCC address',
       );
-      expect(mockMailRepository.sendEmail).not.toHaveBeenCalled();
+      expect(mockRepository.sendEmail).not.toHaveBeenCalled();
     });
 
     it('should throw error if subject is empty', async () => {
@@ -363,10 +207,10 @@ describe('SendMailUseCase', () => {
         subject: '',
       };
 
-      await expect(useCase.execute(invalidInput, validContext)).rejects.toThrow(
+      await expect(useCase.execute(invalidInput)).rejects.toThrow(
         'Subject is required',
       );
-      expect(mockMailRepository.sendEmail).not.toHaveBeenCalled();
+      expect(mockRepository.sendEmail).not.toHaveBeenCalled();
     });
 
     it('should throw error if subject is only whitespace', async () => {
@@ -375,10 +219,10 @@ describe('SendMailUseCase', () => {
         subject: '   ',
       };
 
-      await expect(useCase.execute(invalidInput, validContext)).rejects.toThrow(
+      await expect(useCase.execute(invalidInput)).rejects.toThrow(
         'Subject is required',
       );
-      expect(mockMailRepository.sendEmail).not.toHaveBeenCalled();
+      expect(mockRepository.sendEmail).not.toHaveBeenCalled();
     });
 
     it('should throw error if body is empty', async () => {
@@ -387,10 +231,10 @@ describe('SendMailUseCase', () => {
         body: {},
       };
 
-      await expect(useCase.execute(invalidInput, validContext)).rejects.toThrow(
+      await expect(useCase.execute(invalidInput)).rejects.toThrow(
         'Email body is required',
       );
-      expect(mockMailRepository.sendEmail).not.toHaveBeenCalled();
+      expect(mockRepository.sendEmail).not.toHaveBeenCalled();
     });
 
     it('should allow body with only HTML', async () => {
@@ -401,9 +245,9 @@ describe('SendMailUseCase', () => {
         },
       };
 
-      await useCase.execute(inputWithOnlyHtml, validContext);
+      await useCase.execute(inputWithOnlyHtml);
 
-      expect(mockMailRepository.sendEmail).toHaveBeenCalledOnce();
+      expect(mockRepository.sendEmail).toHaveBeenCalledOnce();
     });
 
     it('should allow body with only text', async () => {
@@ -414,30 +258,9 @@ describe('SendMailUseCase', () => {
         },
       };
 
-      await useCase.execute(inputWithOnlyText, validContext);
+      await useCase.execute(inputWithOnlyText);
 
-      expect(mockMailRepository.sendEmail).toHaveBeenCalledOnce();
-    });
-
-    it('should handle saveEmailLog errors gracefully', async () => {
-      // Mock saveEmailLog to reject
-      const saveError = new Error('Failed to save email log to DynamoDB');
-      vi.mocked(mockTenantConfigRepository.saveEmailLog).mockRejectedValueOnce(
-        saveError,
-      );
-
-      // Execute should still succeed and return messageId
-      const result = await useCase.execute(validInput, validContext);
-
-      // Verify email was still sent
-      expect(mockMailRepository.sendEmail).toHaveBeenCalledOnce();
-      expect(result.messageId).toBeDefined();
-
-      // Verify saveEmailLog was attempted
-      expect(mockTenantConfigRepository.saveEmailLog).toHaveBeenCalledOnce();
-
-      // The error should be logged but not re-thrown
-      // (In a real test, you might spy on console.error)
+      expect(mockRepository.sendEmail).toHaveBeenCalledOnce();
     });
   });
 });

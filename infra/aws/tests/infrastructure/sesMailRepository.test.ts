@@ -1,6 +1,6 @@
 import { Readable } from 'node:stream';
 import type { SESv2Client } from '@aws-sdk/client-sesv2';
-import type { Email, SendContext } from '@rindrics/slackmail';
+import type { Email } from '@rindrics/slackmail';
 import nodemailer from 'nodemailer';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SESMailRepository } from '@/infrastructure/sesMailRepository';
@@ -27,33 +27,6 @@ describe('SESMailRepository', () => {
       html: '<p>This is a test email.</p>',
     },
     date: new Date('2025-01-07T00:00:00Z'),
-  };
-
-  const mockSendContext: SendContext = {
-    tenantConfig: {
-      teamId: 'T12345',
-      teamName: 'Test Workspace',
-      botUserId: 'U12345',
-      botTokenSecretArn:
-        'arn:aws:secretsmanager:us-east-1:123456789012:secret:test',
-      plan: 'pro',
-      status: 'active',
-      installedAt: new Date(),
-      installedBy: 'U00001',
-    },
-    domain: {
-      domainId: 'domain-1',
-      teamId: 'T12345',
-      domain: 'verified-domain.com',
-      verificationStatus: 'verified',
-      dkimStatus: 'verified',
-      mailFromStatus: 'verified',
-      defaultSender: 'noreply@verified-domain.com',
-      createdAt: new Date(),
-    },
-    slackTeamId: 'T12345',
-    slackChannelId: 'C12345',
-    slackUserId: 'U12345',
   };
 
   beforeEach(() => {
@@ -87,13 +60,15 @@ describe('SESMailRepository', () => {
     } as unknown as SESv2Client;
 
     repository = new SESMailRepository({
+      allowedSenderDomain: 'verified-domain.com',
+      defaultSenderAddress: 'noreply@verified-domain.com',
       sesClient: mockSesClient,
     });
   });
 
   describe('sendEmail', () => {
     it('should send email successfully and return message ID', async () => {
-      const messageId = await repository.sendEmail(testEmail, mockSendContext);
+      const messageId = await repository.sendEmail(testEmail);
 
       expect(messageId).toBe('ses-message-id-12345');
 
@@ -120,7 +95,7 @@ describe('SESMailRepository', () => {
         bcc: [{ address: 'bcc@example.com' }],
       };
 
-      await repository.sendEmail(emailWithCcBcc, mockSendContext);
+      await repository.sendEmail(emailWithCcBcc);
 
       expect(mockSendMail).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -136,7 +111,7 @@ describe('SESMailRepository', () => {
         replyTo: { address: 'replyto@verified-domain.com' },
       };
 
-      await repository.sendEmail(emailWithReplyTo, mockSendContext);
+      await repository.sendEmail(emailWithReplyTo);
 
       expect(mockSendMail).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -152,7 +127,7 @@ describe('SESMailRepository', () => {
         references: ['<ref1@example.com>', '<ref2@example.com>'],
       };
 
-      await repository.sendEmail(threadedEmail, mockSendContext);
+      await repository.sendEmail(threadedEmail);
 
       expect(mockSendMail).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -169,7 +144,7 @@ describe('SESMailRepository', () => {
         to: [{ name: 'Jane Smith', address: 'jane@example.com' }],
       };
 
-      await repository.sendEmail(emailWithNames, mockSendContext);
+      await repository.sendEmail(emailWithNames);
 
       expect(mockSendMail).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -186,7 +161,7 @@ describe('SESMailRepository', () => {
         to: [{ address: 'user@example.com' }],
       };
 
-      await repository.sendEmail(emailWithoutNames, mockSendContext);
+      await repository.sendEmail(emailWithoutNames);
 
       expect(mockSendMail).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -204,9 +179,7 @@ describe('SESMailRepository', () => {
         from: { address: 'sender@unauthorized.com' },
       };
 
-      await expect(
-        repository.sendEmail(invalidEmail, mockSendContext),
-      ).rejects.toThrow(
+      await expect(repository.sendEmail(invalidEmail)).rejects.toThrow(
         'Invalid sender domain: unauthorized.com. Must be @verified-domain.com',
       );
 
@@ -219,7 +192,7 @@ describe('SESMailRepository', () => {
         from: { address: 'anyuser@verified-domain.com' },
       };
 
-      await repository.sendEmail(validEmail, mockSendContext);
+      await repository.sendEmail(validEmail);
 
       expect(mockSendMail).toHaveBeenCalledOnce();
     });
@@ -230,23 +203,9 @@ describe('SESMailRepository', () => {
         from: { address: 'sender@Verified-Domain.COM' },
       };
 
-      await expect(
-        repository.sendEmail(mixedCaseEmail, mockSendContext),
-      ).rejects.toThrow('Invalid sender domain');
-    });
-
-    it('should reject email from unverified domain', async () => {
-      const unverifiedContext: SendContext = {
-        ...mockSendContext,
-        domain: {
-          ...mockSendContext.domain,
-          verificationStatus: 'pending',
-        },
-      };
-
-      await expect(
-        repository.sendEmail(testEmail, unverifiedContext),
-      ).rejects.toThrow('is not verified');
+      await expect(repository.sendEmail(mixedCaseEmail)).rejects.toThrow(
+        'Invalid sender domain',
+      );
     });
   });
 
@@ -254,9 +213,7 @@ describe('SESMailRepository', () => {
     it('should wrap SES errors with descriptive message', async () => {
       mockSesSend.mockRejectedValue(new Error('SES rate limit exceeded'));
 
-      await expect(
-        repository.sendEmail(testEmail, mockSendContext),
-      ).rejects.toThrow(
+      await expect(repository.sendEmail(testEmail)).rejects.toThrow(
         'Failed to send email via SES: SES rate limit exceeded',
       );
     });
@@ -264,17 +221,17 @@ describe('SESMailRepository', () => {
     it('should handle nodemailer errors', async () => {
       mockSendMail.mockRejectedValue(new Error('Failed to build MIME'));
 
-      await expect(
-        repository.sendEmail(testEmail, mockSendContext),
-      ).rejects.toThrow('Failed to send email via SES: Failed to build MIME');
+      await expect(repository.sendEmail(testEmail)).rejects.toThrow(
+        'Failed to send email via SES: Failed to build MIME',
+      );
     });
 
     it('should handle unknown errors', async () => {
       mockSesSend.mockRejectedValue('Unknown error');
 
-      await expect(
-        repository.sendEmail(testEmail, mockSendContext),
-      ).rejects.toThrow('Failed to send email via SES: Unknown error');
+      await expect(repository.sendEmail(testEmail)).rejects.toThrow(
+        'Failed to send email via SES: Unknown error',
+      );
     });
   });
 });
