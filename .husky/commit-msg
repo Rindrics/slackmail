@@ -1,0 +1,32 @@
+#!/usr/bin/env sh
+
+echo "📝 Validating commit message..."
+
+# Use commitlint if available, otherwise do basic validation
+if command -v commitlint >/dev/null 2>&1; then
+  commitlint --edit "$1"
+  COMMITLINT_EXIT_CODE=$?
+
+  if [ $COMMITLINT_EXIT_CODE -ne 0 ]; then
+    echo "❌ Commit message validation failed"
+    exit $COMMITLINT_EXIT_CODE
+  fi
+else
+  # Basic conventional commit validation
+  COMMIT_MSG=$(cat "$1")
+
+  # Pattern: type(scope?): subject
+  if ! echo "$COMMIT_MSG" | grep -qE "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?!?: .{1,}"; then
+    echo "❌ Commit message does not follow Conventional Commits format"
+    echo ""
+    echo "Examples of valid commit messages:"
+    echo "  feat: add new feature"
+    echo "  fix(core): resolve bug in parser"
+    echo "  docs: update README"
+    echo "  test: add validation tests"
+    echo ""
+    exit 1
+  fi
+fi
+
+echo "✅ Commit message is valid"
