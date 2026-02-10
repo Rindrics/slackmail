@@ -34,7 +34,8 @@ describe('SESMailRepository', () => {
       teamId: 'T12345',
       teamName: 'Test Workspace',
       botUserId: 'U12345',
-      botToken: 'xoxb-test',
+      botTokenSecretArn:
+        'arn:aws:secretsmanager:us-east-1:123456789012:secret:test',
       plan: 'pro',
       status: 'active',
       installedAt: new Date(),

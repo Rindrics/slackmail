@@ -404,8 +404,4 @@ export class DynamoDBTenantConfigRepository implements TenantConfigRepository {
       updatedAt: updatedAtDate,
     };
   }
-
-  /**
-   * Calculate TTL value (Unix timestamp) for given days from now
-   */
 }
