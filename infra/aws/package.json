@@ -23,7 +23,7 @@
   "devDependencies": {
     "@pulumi/aws": "^7.16.0",
     "@pulumi/pulumi": "^3.215.0",
-    "@smithy/util-stream": "^4.5.8",
+    "@smithy/util-stream": "^4.5.12",
     "@types/aws-lambda": "8.10.159",
     "@types/node": "^25.0.5",
     "@types/nodemailer": "^7.0.5",
