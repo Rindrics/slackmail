@@ -1,5 +1,20 @@
 # Changelog
 
+## [v0.1.6](https://github.com/Rindrics/slackmail/compare/v0.1.5...v0.1.6) - 2026-02-25
+- build(deps-dev): bump vite-tsconfig-paths from 6.0.3 to 6.0.4 by @dependabot[bot] in https://github.com/Rindrics/slackmail/pull/89
+- chore: enhance Husky hooks with comprehensive validation by @Rindrics in https://github.com/Rindrics/slackmail/pull/93
+- feat: support single-user- multi-domain- usecase by @Rindrics in https://github.com/Rindrics/slackmail/pull/92
+- Revert "feat: support single-user- multi-domain- usecase" by @Rindrics in https://github.com/Rindrics/slackmail/pull/95
+- ci: resolve AWS auth error for dependabot by @Rindrics in https://github.com/Rindrics/slackmail/pull/97
+- build(deps-dev): bump @types/nodemailer from 7.0.4 to 7.0.5 by @dependabot[bot] in https://github.com/Rindrics/slackmail/pull/87
+- build(deps-dev): bump @pulumi/aws from 7.15.0 to 7.16.0 by @dependabot[bot] in https://github.com/Rindrics/slackmail/pull/90
+- build(deps): bump @aws-sdk/client-sesv2 from 3.964.0 to 3.966.0 by @dependabot[bot] in https://github.com/Rindrics/slackmail/pull/86
+- docs: update user instructions by @Rindrics in https://github.com/Rindrics/slackmail/pull/96
+- build(deps-dev): bump @types/node from 25.0.3 to 25.0.5 by @dependabot[bot] in https://github.com/Rindrics/slackmail/pull/88
+- build(deps-dev): bump @biomejs/biome from 2.3.11 to 2.3.15 by @dependabot[bot] in https://github.com/Rindrics/slackmail/pull/99
+- build(deps): bump mailparser from 3.9.1 to 3.9.3 by @dependabot[bot] in https://github.com/Rindrics/slackmail/pull/102
+- build(deps-dev): bump dotenv from 17.2.3 to 17.3.1 by @dependabot[bot] in https://github.com/Rindrics/slackmail/pull/101
+
 ## [v0.1.5](https://github.com/Rindrics/slackmail/compare/v0.1.4...v0.1.5) - 2026-01-09
 - Setup Sentry for production by @Rindrics in https://github.com/Rindrics/slackmail/pull/64
 - Handle Slack error to know what occurs by @Rindrics in https://github.com/Rindrics/slackmail/pull/66
